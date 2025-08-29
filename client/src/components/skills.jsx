@@ -276,7 +276,7 @@ export default function Skills() {
           viewport={{ once: true }}
           className="mt-16 text-center"
         >
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {/* <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <motion.div
               whileHover={{ scale: 1.05, y: -5 }}
               className="glass-effect p-6 rounded-xl border border-border hover:border-accent transition-all duration-300"
@@ -316,7 +316,7 @@ export default function Skills() {
               </motion.div>
               <p className="text-muted-foreground">Client Satisfaction</p>
             </motion.div>
-          </div>
+          </div> */}
         </motion.div>
       </div>
     </section>

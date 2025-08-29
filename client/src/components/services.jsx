@@ -28,20 +28,20 @@ const services = [
     features: ["Node.js & Python", "RESTful APIs", "Database Design", "Microservices"],
     color: "from-green-500 to-emerald-500"
   },
-  {
-    title: "Cloud & DevOps",
-    description: "Complete cloud infrastructure setup and management on AWS, Azure, and Google Cloud. CI/CD pipelines, containerization, and monitoring solutions.",
-    icon: <Cloud className="text-3xl" />,
-    features: ["AWS & Azure", "Docker & Kubernetes", "CI/CD Pipelines", "Monitoring & Scaling"],
-    color: "from-purple-500 to-violet-500"
-  },
-  {
-    title: "Mobile Development",
-    description: "Cross-platform mobile applications using React Native and Flutter. Native performance with shared codebase for iOS and Android platforms.",
-    icon: <Smartphone className="text-3xl" />,
-    features: ["React Native", "Flutter", "App Store Deployment", "Push Notifications"],
-    color: "from-pink-500 to-rose-500"
-  },
+  // {
+  //   title: "Cloud & DevOps",
+  //   description: "Complete cloud infrastructure setup and management on AWS, Azure, and Google Cloud. CI/CD pipelines, containerization, and monitoring solutions.",
+  //   icon: <Cloud className="text-3xl" />,
+  //   features: ["AWS & Azure", "Docker & Kubernetes", "CI/CD Pipelines", "Monitoring & Scaling"],
+  //   color: "from-purple-500 to-violet-500"
+  // },
+  // {
+  //   title: "Mobile Development",
+  //   description: "Cross-platform mobile applications using React Native and Flutter. Native performance with shared codebase for iOS and Android platforms.",
+  //   icon: <Smartphone className="text-3xl" />,
+  //   features: ["React Native", "Flutter", "App Store Deployment", "Push Notifications"],
+  //   color: "from-pink-500 to-rose-500"
+  // },
   {
     title: "UI/UX Design",
     description: "Creating intuitive, beautiful user interfaces and experiences. User research, wireframing, prototyping, and design system development.",

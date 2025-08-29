@@ -19,31 +19,33 @@ const services = [
 ];
 
 const socialLinks = [
-  { 
+{ 
     icon: <Github className="text-xl" />, 
-    href: "#", 
+    href: "https://github.com/vishalkmar", 
     name: "GitHub",
     color: "hover:text-gray-400"
   },
   { 
     icon: <Linkedin className="text-xl" />, 
-    href: "#", 
+    href: "https://www.linkedin.com/in/vishal-kumar-839490327/", 
     name: "LinkedIn",
     color: "hover:text-blue-500"
   },
   { 
     icon: <Twitter className="text-xl" />, 
-    href: "#", 
+    href: "https://x.com/vk722413", 
     name: "Twitter",
     color: "hover:text-sky-500"
   }
 ];
 
 const contactInfo = [
-  { icon: <Mail className="w-4 h-4" />, text: "alex.chen@example.com" },
-  { icon: <Phone className="w-4 h-4" />, text: "+1 (555) 123-4567" },
-  { icon: <MapPin className="w-4 h-4" />, text: "San Francisco, CA" }
+  { icon: <Mail className="w-4 h-4" />, text: "vk722413@gmail.com" },
+  { icon: <Phone className="w-4 h-4" />, text: "+91 9540792427" },
+  { icon: <MapPin className="w-4 h-4" />, text: "Shahdara Delhi India" }
 ];
+
+ 
 
 export default function Footer() {
   const scrollToSection = (href) => {
@@ -223,7 +225,7 @@ export default function Footer() {
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
-              &copy; {currentYear} Alex Chen. All rights reserved. Built with React and modern web technologies.
+              &copy; {currentYear} Vishal kumar. All rights reserved. Built with React and modern web technologies.
             </motion.p>
             
             {/* Additional Links */}

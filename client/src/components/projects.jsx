@@ -3,75 +3,86 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Github, Code, Database, Globe, Smartphone } from "lucide-react";
+import mcti from '../images/mcti.jpg';
+import swingtraderrs from '../images/swingtraderrs.jpg';
+import collabcircle from '../images/collabcircle.jpg';
+import softwaresolution from '../images/softwareSolution.jpg';
+import jobportal from '../images/jobportal.jpg';
+import schoolmanagement from '../images/schoolmanagement.jpg';
 
 const projectCategories = [
   { id: 'all', label: 'All Projects', icon: <Globe className="w-5 h-5" /> },
   { id: 'frontend', label: 'Frontend', icon: <Code className="w-5 h-5" /> },
   { id: 'fullstack', label: 'Full Stack', icon: <Database className="w-5 h-5" /> },
-  { id: 'mobile', label: 'Mobile', icon: <Smartphone className="w-5 h-5" /> }
+  
 ];
 
 const projects = [
+ {
+  id: 1,
+  title: "Job Portal",
+  description: "A full-stack job portal built with the MERN stack (MongoDB, Express, React, Node.js) and Redux for state management. Features include user authentication, job listings, application tracking, and admin dashboard. Integrated SQL & NoSQL databases for efficient data management.",
+  image: jobportal,
+  technologies: ["React", "Node.js", "MongoDB", "express","tailwind css",'redux'],
+  category: "fullstack",
+  liveUrl: "#",      // Replace with deployed project link
+  githubUrl: "https://github.com/vishalkmar/jobPortal"     // Replace with GitHub repo link
+}
+,
+{
+  id: 2,
+  title: "School Management System",
+  description: "A full-stack school management system built with MERN stack (MongoDB, Express, React, Node.js) and Redux. Features include student and teacher management, attendance tracking, grade reports, and admin dashboard. Integrated SQL & NoSQL databases for efficient data handling and real-time updates.",
+  image: schoolmanagement,
+    technologies: ["React", "Node.js", "MongoDB", "express","tailwind css",'redux'],
+  category: "fullstack",
+  liveUrl: "#",      // Replace with deployed project link
+  githubUrl: "https://github.com/vishalkmar/hospitalManagement"     // Replace with GitHub repo link
+}
+,
+{
+  id: 3,
+  title: "Course Selling & Institute Management",
+  description: "A full-stack application for institute management and online course selling, built with MERN stack (MongoDB, Express, React, Node.js) and Redux. Features include course catalog, user registration, secure payments, instructor dashboard, and student progress tracking. Integrated SQL & NoSQL databases for efficient data management and analytics.",
+  image: mcti,
+  technologies: ["React", "Node.js", "MongoDB", "express","tailwind css",'bootstrap','nodemailer'],
+  category: "fullstack",
+  liveUrl: "https://mcti.online/",      // Replace with deployed project link
+  githubUrl: "https://github.com/vishalkmar/mcticomputer"     // Replace with GitHub repo link
+}
+,
   {
-    id: 1,
-    title: "React E-Commerce Platform",
-    description: "Modern e-commerce solution with React, Redux, and responsive design. Features shopping cart, user authentication, and payment integration.",
-    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-    technologies: ["React", "Redux", "Tailwind CSS", "Stripe"],
-    category: "frontend",
-    liveUrl: "#",
-    githubUrl: "#"
-  },
+  id: 4,
+  title: "SwingTraderrs Website",
+  description: "A fully responsive frontend website for SwingTraderrs, built with **HTML, CSS, Bootstrap, and React**. Features include dynamic pages, interactive UI elements, responsive design for all devices, and integrated email functionality using Nodemailer. Optimized for performance and modern web standards.",
+  image:swingtraderrs,
+    technologies: ["HTML", "Css", "bootstrap", "React","JavaScript",'nodemailer'],
+  category: "frontend",
+  liveUrl: "https://swingtraderrs.com",      // Replace with live website link
+  githubUrl: "#"                             // Replace with GitHub repo link if available
+}
+,
   {
-    id: 2,
-    title: "Full Stack Social Media App",
-    description: "Complete social platform with real-time chat, posts, notifications. Built with MERN stack and WebSocket for real-time features.",
-    image: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-    technologies: ["React", "Node.js", "MongoDB", "Socket.io"],
-    category: "fullstack",
-    liveUrl: "#",
-    githubUrl: "#"
-  },
-  {
-    id: 3,
-    title: "React Native Fitness App",
-    description: "Cross-platform mobile app for fitness tracking with workout plans, progress monitoring, and social features.",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-    technologies: ["React Native", "Firebase", "Redux"],
-    category: "mobile",
-    liveUrl: "#",
-    githubUrl: "#"
-  },
-  {
-    id: 4,
-    title: "Vue.js Dashboard",
-    description: "Advanced analytics dashboard with beautiful charts, real-time data updates, and responsive design using Vue.js ecosystem.",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-    technologies: ["Vue.js", "Vuex", "Chart.js", "SCSS"],
-    category: "frontend",
-    liveUrl: "#",
-    githubUrl: "#"
-  },
-  {
-    id: 5,
-    title: "Full Stack Food Delivery",
-    description: "Complete food delivery platform with restaurant management, order tracking, payment processing, and delivery coordination.",
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-    technologies: ["React", "Express", "PostgreSQL", "Stripe"],
-    category: "fullstack",
-    liveUrl: "#",
-    githubUrl: "#"
-  },
-  {
-    id: 6,
-    title: "Flutter Travel App",
-    description: "Beautiful travel planning app with destination discovery, booking integration, and offline capabilities built with Flutter.",
-    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-    technologies: ["Flutter", "Dart", "Firebase", "Maps API"],
-    category: "mobile",
-    liveUrl: "#",
-    githubUrl: "#"
-  }
+  id: 5,
+  title: "Software Solutions Website",
+  description: "A fully responsive frontend website for my Software Solutions company, built with **HTML, CSS, Bootstrap, and React**. Features include dynamic sections for services, portfolio showcase, client testimonials, contact forms with Nodemailer integration, and modern responsive design for all devices.",
+  image: softwaresolution,
+  technologies: ["HTML", "CSS", "Bootstrap", "React", "JavaScript", "Nodemailer"],
+  category: "frontend",
+  liveUrl: "https://effervescent-lily-965902.netlify.app/",   // Replace with your live website link
+  githubUrl: "https://github.com/vishalkmar/code"                        // Replace with GitHub repo link if available
+}
+,
+{
+  id: 6,
+  title: "CollabCircle Airconditioner Website",
+  description: "A fully responsive frontend website for CollabCircle Airconditioner, built with **Next.js, Tailwind CSS, Framer Motion, HTML, CSS, and JavaScript**. Features interactive animations, dynamic pages, responsive layout for all devices, and integrated contact forms with Nodemailer.",
+  image:collabcircle,
+  technologies: ["Next.js", "Tailwind CSS", "Framer Motion", "HTML", "CSS", "JavaScript", "Nodemailer"],
+  category: "frontend",
+  liveUrl: "https://calm-strudel-939c26.netlify.app/",     // Replace with live website link
+  githubUrl: "#"    // Replace with GitHub repo link if available
+}
 ];
 
 export default function Projects() {

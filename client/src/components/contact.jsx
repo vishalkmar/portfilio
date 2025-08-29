@@ -22,19 +22,19 @@ import {
 const contactInfo = [
   {
     icon: <Mail className="text-accent text-xl" />,
-    title: "alex.chen@example.com",
+    title: "vk722413@gmail.com",
     subtitle: "Email me directly",
     color: "from-blue-500 to-cyan-500"
   },
   {
     icon: <Phone className="text-accent text-xl" />,
-    title: "+1 (555) 123-4567",
+    title: "+91 9540792427",
     subtitle: "Call for urgent matters",
     color: "from-green-500 to-emerald-500"
   },
   {
     icon: <MapPin className="text-accent text-xl" />,
-    title: "San Francisco, CA",
+    title: "Shahdara Delhi India",
     subtitle: "Available for remote work",
     color: "from-purple-500 to-violet-500"
   }
@@ -43,19 +43,19 @@ const contactInfo = [
 const socialLinks = [
   { 
     icon: <Github className="text-xl" />, 
-    href: "#", 
+    href: "https://github.com/vishalkmar", 
     name: "GitHub",
     color: "hover:text-gray-400"
   },
   { 
     icon: <Linkedin className="text-xl" />, 
-    href: "#", 
+    href: "https://www.linkedin.com/in/vishal-kumar-839490327/", 
     name: "LinkedIn",
     color: "hover:text-blue-500"
   },
   { 
     icon: <Twitter className="text-xl" />, 
-    href: "#", 
+    href: "https://x.com/vk722413", 
     name: "Twitter",
     color: "hover:text-sky-500"
   }
@@ -72,12 +72,13 @@ export default function Contact() {
   const [formStatus, setFormStatus] = useState(null);
   const { toast } = useToast();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear status when user starts typing
-    if (formStatus) setFormStatus(null);
-  };
+ const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,        // keep existing fields
+    [name]: value   // update the field that changed
+  }));
+};
 
   const downloadCV = () => {
     // Create a more detailed CV download
@@ -141,12 +142,12 @@ CERTIFICATIONS
     
     // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
-      setFormStatus('error');
+      // setFormStatus('error');
       toast({
         title: "Please fill in all required fields",
         variant: "destructive"
       });
-      setIsSubmitting(false);
+      // setIsSubmitting(false);
       return;
     }
 
