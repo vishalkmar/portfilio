@@ -40,11 +40,11 @@ export default function Header() {
 
   const navItems = [
     { id: 'home', label: 'Home' },
+    { id: 'education', label: 'education' },
     { id: 'projects', label: 'Projects' },
-    { id: 'services', label: 'Services' },
     { id: 'skills', label: 'Skills' },
-    { id: 'contact', label: 'Contact' },
-     { id: 'education', label: 'education' }
+    { id: 'services', label: 'Services' },
+    { id: 'contact', label: 'Contact' }
   ];
 
   return (
@@ -68,7 +68,7 @@ export default function Header() {
             onClick={() => scrollToSection('home')}
             whileHover={{ scale: 1.05 }}
           >
-            <span className="gradient-text animate-glow">Alex Chen</span>
+            <span className="gradient-text animate-glow">Vishal Kumar</span>
           </motion.div>
           
           {/* Desktop Navigation */}

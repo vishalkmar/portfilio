@@ -7,6 +7,7 @@ import Services from "@/components/services";
 import Skills from "@/components/skills";
 import Contact from "@/components/contact";
 import Footer from "@/components/footer";
+import Education from "../components/education";
 
 export default function Home() {
   useEffect(() => {
@@ -120,7 +121,16 @@ export default function Home() {
         >
           <Hero />
         </motion.div>
-        
+
+            <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <Education/>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -130,6 +140,16 @@ export default function Home() {
           <Projects />
         </motion.div>
         
+        
+
+         <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <Skills />
+        </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -137,15 +157,6 @@ export default function Home() {
           viewport={{ once: true, margin: "-100px" }}
         >
           <Services />
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          <Skills />
         </motion.div>
         
         <motion.div
