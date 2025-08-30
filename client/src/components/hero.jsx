@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Download, Eye, ArrowRight } from "lucide-react";
-
+import pdf from '../images/RESUME.pdf';
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -67,9 +67,8 @@ const texts = [
   const downloadResume = () => {
     // Create a dummy CV download
     const link = document.createElement("a");
-    link.href =
-      "data:text/plain;charset=utf-8,Alex Chen - Full Stack Developer Resume\n\nContact: alex.chen@example.com\nPhone: +1 (555) 123-4567\n\nExperience:\n- 5+ years Full Stack Development\n- React, Node.js, Cloud Architecture\n- Led 10+ successful projects\n\nSkills:\n- Frontend: React, Vue.js, TypeScript\n- Backend: Node.js, Python, PostgreSQL\n- Cloud: AWS, Azure, Docker";
-    link.download = "Alex_Chen_Resume.txt";
+    link.href = pdf
+       link.download = "vishal.pdf";
     link.click();
   };
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import pdf from '../images/RESUME.pdf';
 import { 
   Mail, 
   Phone, 
@@ -73,61 +74,18 @@ export default function Contact() {
   const { toast } = useToast();
 
  const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  setFormData(prev => ({
-    ...prev,        // keep existing fields
-    [name]: value   // update the field that changed
-  }));
+  // const { name, value } = e.target;
+  setFormData({
+    ...formData,        // keep existing fields
+    [e.target.name]:e.target.value   // update the field that changed
+  });
 };
 
   const downloadCV = () => {
-    // Create a more detailed CV download
-    const cvContent = `
-ALEX CHEN - FULL STACK DEVELOPER
-Contact: alex.chen@example.com | +1 (555) 123-4567
-Location: San Francisco, CA | Portfolio: alexchen.dev
-
-SUMMARY
-Passionate Full Stack Developer with 5+ years of experience building modern web applications.
-Specialized in React, Node.js, and cloud technologies with a track record of delivering
-high-quality solutions for startups and enterprises.
-
-TECHNICAL SKILLS
-Frontend: React, Vue.js, TypeScript, Next.js, Tailwind CSS, Redux
-Backend: Node.js, Express.js, Python, REST APIs, GraphQL
-Database: PostgreSQL, MongoDB, MySQL, Redis
-Cloud: AWS, Azure, Docker, Kubernetes, CI/CD
-Tools: Git, VS Code, Postman, Jest, Webpack, Vite
-
-EXPERIENCE
-Senior Full Stack Developer | TechCorp Inc. | 2021 - Present
-- Led development of 10+ web applications serving 100K+ users
-- Improved application performance by 40% through optimization
-- Mentored junior developers and established coding standards
-
-Full Stack Developer | StartupXYZ | 2019 - 2021  
-- Built scalable e-commerce platform generating $2M+ in revenue
-- Implemented real-time features using WebSocket and Redis
-- Collaborated with design team to create responsive UIs
-
-PROJECTS
-- E-Commerce Platform: React, Node.js, PostgreSQL, Stripe integration
-- Social Media App: MERN stack, Socket.io, real-time chat
-- Analytics Dashboard: Vue.js, Python, MongoDB, data visualization
-
-EDUCATION
-B.S. Computer Science | Stanford University | 2019
-Relevant Coursework: Data Structures, Algorithms, Database Systems
-
-CERTIFICATIONS
-- AWS Certified Solutions Architect
-- Google Cloud Professional Developer
-- MongoDB Certified Developer
-    `;
-
+    
     const link = document.createElement('a');
-    link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(cvContent);
-    link.download = 'Alex_Chen_Full_Stack_Developer_CV.txt';
+    link.href = pdf
+    link.download = 'vishal-kumar-CV.pdf';
     link.click();
 
     toast({
@@ -139,47 +97,21 @@ CERTIFICATIONS
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+    console.log(formData);
     // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
-      // setFormStatus('error');
+      setFormStatus('error');
       toast({
         title: "Please fill in all required fields",
         variant: "destructive"
       });
-      // setIsSubmitting(false);
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setFormStatus('error');
-      toast({
-        title: "Please enter a valid email address",
-        variant: "destructive"
-      });
       setIsSubmitting(false);
       return;
     }
+    
+    setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setFormStatus('success');
-      toast({
-        title: "Message sent successfully!",
-        description: "Thank you for your message. I'll get back to you within 24 hours."
-      });
-
-      // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: ""
-      });
-      setIsSubmitting(false);
-    }, 2000);
+     
   };
 
   return (
@@ -370,7 +302,7 @@ CERTIFICATIONS
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="Your full name"
-                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm"
+                       className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
                         data-testid="input-name"
                         required
                       />
@@ -391,7 +323,7 @@ CERTIFICATIONS
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="your.email@example.com"
-                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm"
+                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
                         data-testid="input-email"
                         required
                       />
@@ -412,8 +344,9 @@ CERTIFICATIONS
                       value={formData.subject}
                       onChange={handleInputChange}
                       placeholder="Project inquiry, collaboration, etc."
-                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm"
+                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
                       data-testid="input-subject"
+                      required
                     />
                   </motion.div>
                   
@@ -432,7 +365,8 @@ CERTIFICATIONS
                       onChange={handleInputChange}
                       rows={6}
                       placeholder="Tell me about your project, goals, timeline, and how I can help bring your vision to life..."
-                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 text-lg resize-none backdrop-blur-sm"
+                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
+
                       data-testid="textarea-message"
                       required
                     />

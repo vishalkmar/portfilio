@@ -59,7 +59,7 @@ const projects = [
     technologies: ["HTML", "Css", "bootstrap", "React","JavaScript",'nodemailer'],
   category: "frontend",
   liveUrl: "https://swingtraderrs.com",      // Replace with live website link
-  githubUrl: "#"                             // Replace with GitHub repo link if available
+  githubUrl: "https://github.com/vishalkmar/swingtraderrs"                             // Replace with GitHub repo link if available
 }
 ,
   {
@@ -81,7 +81,7 @@ const projects = [
   technologies: ["Next.js", "Tailwind CSS", "Framer Motion", "HTML", "CSS", "JavaScript", "Nodemailer"],
   category: "frontend",
   liveUrl: "https://calm-strudel-939c26.netlify.app/",     // Replace with live website link
-  githubUrl: "#"    // Replace with GitHub repo link if available
+  githubUrl: "https://github.com/vishalkmar/collabcircle"    // Replace with GitHub repo link if available
 }
 ];
 
