@@ -25,7 +25,7 @@ const projects = [
   image: jobportal,
   technologies: ["React", "Node.js", "MongoDB", "express","tailwind css",'redux'],
   category: "fullstack",
-  liveUrl: "#",      // Replace with deployed project link
+  liveUrl: "https://jobportalxxx.netlify.app",      // Replace with deployed project link
   githubUrl: "https://github.com/vishalkmar/jobPortal"     // Replace with GitHub repo link
 }
 ,
@@ -36,7 +36,7 @@ const projects = [
   image: schoolmanagement,
     technologies: ["React", "Node.js", "MongoDB", "express","tailwind css",'redux'],
   category: "fullstack",
-  liveUrl: "#",      // Replace with deployed project link
+  liveUrl: "https://schoolmanagementxx.netlify.app",      // Replace with deployed project link
   githubUrl: "https://github.com/vishalkmar/hospitalManagement"     // Replace with GitHub repo link
 }
 ,
