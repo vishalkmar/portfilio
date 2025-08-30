@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 import pdf from '../images/RESUME.pdf';
 import { 
   Mail, 
@@ -97,7 +98,6 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.log(formData);
     // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
       setFormStatus('error');
@@ -108,8 +108,29 @@ export default function Contact() {
       setIsSubmitting(false);
       return;
     }
+    else{
+
+         axios.post('https://portfoliobackend-b8bf.onrender.com/send', formData)
+          .then((res) => {
+            console.log(res.data);
+            alert("email send sucessfully");
+
+             setFormData({
+                 name:"",
+                 email: "",
+                 subject:"",
+                 message:""
+             })
+          })
+          .catch((err) => {
+             alert("error in sending email");
+            console.log("Error aagaya:", err);
+          });
+
+      setIsSubmitting(false);
+    }
     
-    setIsSubmitting(true);
+    
 
      
   };
