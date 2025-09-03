@@ -9,7 +9,7 @@
       "baseColor": "neutral",
       "cssVariables": true,
       "prefix": ""
-    },
+    },s
     "aliases": {
       "components": "@/components",
       "utils": "@/lib/utils",

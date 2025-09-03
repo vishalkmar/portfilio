@@ -302,6 +302,8 @@ export default function Projects() {
                     <div className="flex gap-3">
                       <motion.a
                         href={project.liveUrl}
+                         target="_blank"
+                        rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="flex items-center gap-2 text-accent hover:text-accent/80 font-medium transition-colors"
@@ -312,6 +314,8 @@ export default function Projects() {
                       </motion.a>
                       <motion.a
                         href={project.githubUrl}
+                          target="_blank"
+                        rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="flex items-center gap-2 text-accent hover:text-accent/80 font-medium transition-colors"

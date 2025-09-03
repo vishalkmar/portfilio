@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Download, Eye, ArrowRight } from "lucide-react";
-import pdf from '../images/RESUME.pdf';
+import pdf from '../images/resume.pdf';
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);

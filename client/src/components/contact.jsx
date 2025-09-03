@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
-import pdf from '../images/RESUME.pdf';
+import pdf from '../images/resume.pdf';
 import { 
   Mail, 
   Phone, 
@@ -99,6 +99,7 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     // Basic validation
+    alert("please wait , Your email is on the way")
     if (!formData.name || !formData.email || !formData.message) {
       setFormStatus('error');
       toast({
