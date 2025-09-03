@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Download, Eye, ArrowRight } from "lucide-react";
-import pdf from '../images/resume.pdf';
+// import pdf from '../images/resume.pdf';
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -67,7 +67,7 @@ const texts = [
   const downloadResume = () => {
     // Create a dummy CV download
     const link = document.createElement("a");
-    link.href = pdf
+    link.href = '../../public/resume.pdf'
        link.download = "vishal.pdf";
     link.click();
   };

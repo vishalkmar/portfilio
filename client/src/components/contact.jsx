@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
-import pdf from '../images/resume.pdf';
+// import pdf from '../images/resume.pdf';
 import { 
   Mail, 
   Phone, 
@@ -85,7 +85,7 @@ export default function Contact() {
   const downloadCV = () => {
     
     const link = document.createElement('a');
-    link.href = pdf
+    link.href = '../../public/resume.pdf'
     link.download = 'vishal-kumar-CV.pdf';
     link.click();
 
