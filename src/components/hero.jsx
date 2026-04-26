@@ -1,28 +1,51 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Download, Eye, ArrowRight } from "lucide-react";
-// import pdf from '../images/resume.pdf';
-export default function Hero() {
-  const [currentText, setCurrentText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showCursor, setShowCursor] = useState(true);
-  
-const texts = [
+import { Download, Eye, ArrowRight } from "lucide-react";
+import { publicApi } from "@/lib/publicApi";
+import { API_BASE } from "@/lib/api";
+
+const FALLBACK_TEXTS = [
   "Frontend Developer",
   "Backend Developer",
   "Full Stack Developer",
-  "React Expert",
-  "Node.js Developer",
-  "UI/UX Designer",
 ];
 
+export default function Hero() {
+  const [currentText, setCurrentText] = useState("");
+  const [showCursor, setShowCursor] = useState(true);
+  const [data, setData] = useState({
+    name: "Vishal Kumar",
+    image: "",
+    summary: "",
+    positions: FALLBACK_TEXTS,
+    resumeUrl: "",
+    resumeFilename: "",
+  });
 
   useEffect(() => {
+    publicApi
+      .personal()
+      .then((d) => {
+        setData({
+          name: d.name || "Vishal Kumar",
+          image: d.image || "",
+          summary: d.summary || "",
+          positions:
+            d.positions?.length ? d.positions : d.position ? [d.position] : FALLBACK_TEXTS,
+          resumeUrl: d.resumeUrl || "",
+          resumeFilename: d.resumeFilename || "",
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const texts = data.positions?.length ? data.positions : FALLBACK_TEXTS;
     let typeIndex = 0;
     let charIndex = 0;
     let deleting = false;
+    let timer;
 
     const type = () => {
       const fullText = texts[typeIndex];
@@ -35,7 +58,7 @@ const texts = [
 
       if (!deleting && charIndex === fullText.length) {
         deleting = true;
-        setTimeout(type, 2000); // pause at full text
+        timer = setTimeout(type, 2000);
         return;
       }
 
@@ -45,18 +68,15 @@ const texts = [
       }
 
       charIndex = deleting ? charIndex - 1 : charIndex + 1;
-      setTimeout(type, deleting ? 50 : 100);
+      timer = setTimeout(type, deleting ? 50 : 100);
     };
 
-    const timer = setTimeout(type, 500);
-
+    timer = setTimeout(type, 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [data.positions]);
 
   useEffect(() => {
-    const cursorTimer = setInterval(() => {
-      setShowCursor((prev) => !prev);
-    }, 500);
+    const cursorTimer = setInterval(() => setShowCursor((p) => !p), 500);
     return () => clearInterval(cursorTimer);
   }, []);
 
@@ -65,11 +85,9 @@ const texts = [
   };
 
   const downloadResume = () => {
-    // Create a dummy CV download
-    const link = document.createElement("a");
-    link.href = '../../public/resume.pdf'
-       link.download = "vishal.pdf";
-    link.click();
+    if (!data.resumeUrl) return;
+    const url = data.resumeUrl.startsWith("http") ? data.resumeUrl : `${API_BASE}${data.resumeUrl}`;
+    window.open(url, "_blank");
   };
 
   return (
@@ -77,72 +95,31 @@ const texts = [
       id="home"
       className="min-h-screen flex items-center justify-center relative overflow-hidden"
     >
-      {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <motion.div
-          animate={{
-            y: [0, -30, 0],
-            x: [0, 20, 0],
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ y: [0, -30, 0], x: [0, 20, 0], scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-accent/30 to-secondary/30 rounded-full blur-3xl animate-pulse"
         />
         <motion.div
-          animate={{
-            y: [0, 30, 0],
-            x: [0, -20, 0],
-            scale: [1, 1.2, 1],
-            rotate: [0, -5, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
+          animate={{ y: [0, 30, 0], x: [0, -20, 0], scale: [1, 1.2, 1], rotate: [0, -5, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-secondary/30 to-accent/30 rounded-full blur-3xl animate-pulse"
         />
         <motion.div
-          animate={{
-            y: [0, -20, 0],
-            x: [0, 15, 0],
-            scale: [1, 0.9, 1],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
+          animate={{ y: [0, -20, 0], x: [0, 15, 0], scale: [1, 0.9, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           className="absolute top-1/2 right-1/3 w-64 h-64 bg-gradient-to-r from-accent/20 to-secondary/20 rounded-full blur-2xl"
         />
       </div>
 
-      {/* Floating Particles */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
-          animate={{
-            y: [0, -100, 0],
-            x: [0, Math.random() * 100 - 50, 0],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: Math.random() * 10 + 10,
-            repeat: Infinity,
-            delay: Math.random() * 5,
-          }}
+          animate={{ y: [0, -100, 0], x: [0, Math.random() * 100 - 50, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: Math.random() * 10 + 10, repeat: Infinity, delay: Math.random() * 5 }}
           className="absolute w-2 h-2 bg-accent/50 rounded-full"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
+          style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
         />
       ))}
 
@@ -153,39 +130,37 @@ const texts = [
           transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
           className="relative"
         >
-          {/* Profile Image with Glowing Border */}
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1, y: [0, -10, 0], x: [0, 10, 0] }}
-            transition={{
-              duration: 1.5,
-              delay: 0.5,
-              ease: "easeOut",
-              repeatType: "loop",
-            }}
+            transition={{ duration: 1.5, delay: 0.5, ease: "easeOut", repeatType: "loop" }}
             className="relative mx-auto mb-8 w-48 h-48 md:w-64 md:h-64"
           >
-            {/* Glowing outer layer */}
             <div className="absolute inset-0 bg-gradient-to-r from-accent/50 via-secondary/50 to-accent/50 rounded-full blur-3xl opacity-70 animate-pulse p-1" />
-
             <div
               className="w-full h-full bg-background rounded-lg p-2 overflow-hidden flex items-center justify-center"
               style={{
                 borderRadius: "50%",
-                border: "6px solid #111", // thick dark border
-                boxShadow: "0 0 20px rgba(30,144,255,0.6)", // bluish glow
+                border: "6px solid #111",
+                boxShadow: "0 0 20px rgba(30,144,255,0.6)",
               }}
             >
               <div
                 className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20 rounded-lg flex items-center justify-center overflow-hidden"
                 style={{ borderRadius: "50%" }}
               >
-                <img
-                  src="https://www.shutterstock.com/image-photo/portrait-young-hispanic-professional-business-600nw-2510293403.jpg"
-                  alt="Portfolio"
-                  className="w-full h-full object-cover"
-                  style={{ borderRadius: "50%" }}
-                />
+                {data.image ? (
+                  <img
+                    src={data.image}
+                    alt={data.name}
+                    className="w-full h-full object-cover"
+                    style={{ borderRadius: "50%" }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-5xl font-bold gradient-text">
+                    {data.name?.[0] || "V"}
+                  </div>
+                )}
               </div>
             </div>
             <motion.div
@@ -212,15 +187,11 @@ const texts = [
           >
             <motion.span
               className="gradient-text block"
-              animate={{
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-              }}
+              animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
               transition={{ duration: 3, repeat: Infinity }}
-              style={{
-                backgroundSize: "200% 200%",
-              }}
+              style={{ backgroundSize: "200% 200%" }}
             >
-              Vishal Kumar
+              {data.name}
             </motion.span>
           </motion.h1>
 
@@ -232,25 +203,22 @@ const texts = [
           >
             <span className="font-semibold">
               {currentText}
-              <motion.span
-                animate={{ opacity: showCursor ? 1 : 0 }}
-                className="text-accent ml-1"
-              >
+              <motion.span animate={{ opacity: showCursor ? 1 : 0 }} className="text-accent ml-1">
                 |
               </motion.span>
             </span>
           </motion.div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-            className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed"
-          >
-           I am a Full Stack Web Developer skilled in MERN (MongoDB, Express, React, Node.js), with experience in Redux, Next.js,
-            and SQL/NoSQL databases. I build dynamic, scalable, and responsive web applications that combine modern design
-             with robust functionality. 
-             </motion.p>
+          {data.summary && (
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+              className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed"
+            >
+              {data.summary}
+            </motion.p>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -258,16 +226,12 @@ const texts = [
             transition={{ duration: 0.8, delay: 1.4 }}
             className="flex flex-col sm:flex-row gap-6 justify-center items-center"
           >
-            <motion.div
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.div whileHover={{ scale: 1.05, y: -5 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={scrollToProjects}
                 className="magnetic-button bg-gradient-to-r from-accent to-secondary text-white px-10 py-6 text-xl font-bold rounded-full shadow-2xl shadow-accent/50 hover:shadow-accent/70 transition-all duration-500 animate-glow group relative overflow-hidden"
                 data-testid="button-view-work"
               >
-                <motion.div className="absolute inset-0 bg-gradient-to-r from-secondary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <span className="relative z-10 flex items-center gap-3">
                   <Eye className="w-6 h-6" />
                   View My Work
@@ -276,27 +240,24 @@ const texts = [
               </Button>
             </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button
-                variant="outline"
-                onClick={downloadResume}
-                className="magnetic-button border-2 border-accent text-accent px-10 py-6 text-xl font-bold rounded-full hover:bg-accent hover:text-accent-foreground transition-all duration-500 group relative overflow-hidden backdrop-blur-sm"
-                data-testid="button-download-resume"
-              >
-                <motion.div className="absolute inset-0 bg-gradient-to-r from-accent/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative z-10 flex items-center gap-3">
-                  <Download className="w-6 h-6 group-hover:animate-bounce" />
-                  Download CV
-                </span>
-              </Button>
-            </motion.div>
+            {data.resumeUrl && (
+              <motion.div whileHover={{ scale: 1.05, y: -5 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  onClick={downloadResume}
+                  className="magnetic-button border-2 border-accent text-accent px-10 py-6 text-xl font-bold rounded-full hover:bg-accent hover:text-accent-foreground transition-all duration-500 group relative overflow-hidden backdrop-blur-sm"
+                  data-testid="button-download-resume"
+                >
+                  <span className="relative z-10 flex items-center gap-3">
+                    <Download className="w-6 h-6 group-hover:animate-bounce" />
+                    Download CV
+                  </span>
+                </Button>
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
 
-        {/* Enhanced Scroll Indicator */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -308,15 +269,10 @@ const texts = [
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="w-8 h-14 border-2 border-accent rounded-full flex justify-center cursor-pointer relative group"
             onClick={scrollToProjects}
-            data-testid="scroll-indicator"
             whileHover={{ scale: 1.1 }}
           >
             <motion.div
-              animate={{
-                y: [0, 12, 0],
-                opacity: [0, 1, 0],
-                scale: [0.8, 1, 0.8],
-              }}
+              animate={{ y: [0, 12, 0], opacity: [0, 1, 0], scale: [0.8, 1, 0.8] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               className="w-2 h-4 bg-accent rounded-full mt-3"
             />

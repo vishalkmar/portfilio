@@ -2,18 +2,40 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { publicApi } from "@/lib/publicApi";
+
+const DEFAULT_NAV = [
+  { id: "home", label: "Home" },
+  { id: "education", label: "Education" },
+  { id: "projects", label: "Projects" },
+  { id: "skills", label: "Skills" },
+  { id: "services", label: "Services" },
+  { id: "contact", label: "Contact" },
+];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [scrolled, setScrolled] = useState(false);
+  const [brand, setBrand] = useState("Vishal Kumar");
+  const [navItems, setNavItems] = useState(DEFAULT_NAV);
+
+  useEffect(() => {
+    publicApi
+      .header()
+      .then((d) => {
+        if (d?.brand) setBrand(d.brand);
+        if (Array.isArray(d?.navItems) && d.navItems.length) setNavItems(d.navItems);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const sections = document.querySelectorAll('section[id]');
-    
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
-      
+
       let current = 'home';
       sections.forEach(section => {
         const sectionTop = section.offsetTop;
@@ -38,29 +60,20 @@ export default function Header() {
     setIsMenuOpen(false);
   };
 
-  const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'education', label: 'education' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'skills', label: 'Skills' },
-    { id: 'services', label: 'Services' },
-    { id: 'contact', label: 'Contact' }
-  ];
-
   return (
-    <motion.header 
+    <motion.header
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled 
-          ? 'glass-effect backdrop-blur-xl shadow-2xl shadow-accent/20' 
+        scrolled
+          ? 'glass-effect backdrop-blur-xl shadow-2xl shadow-accent/20'
           : 'bg-transparent'
       }`}
     >
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -68,9 +81,9 @@ export default function Header() {
             onClick={() => scrollToSection('home')}
             whileHover={{ scale: 1.05 }}
           >
-            <span className="gradient-text animate-glow">Vishal Kumar</span>
+            <span className="gradient-text animate-glow">{brand}</span>
           </motion.div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item, index) => (
@@ -81,8 +94,8 @@ export default function Header() {
                 transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
                 onClick={() => scrollToSection(item.id)}
                 className={`nav-link relative text-lg font-medium transition-all duration-300 hover:scale-110 ${
-                  activeSection === item.id 
-                    ? 'text-accent' 
+                  activeSection === item.id
+                    ? 'text-accent'
                     : 'text-foreground hover:text-accent'
                 }`}
                 data-testid={`nav-link-${item.id}`}
@@ -101,7 +114,7 @@ export default function Header() {
               </motion.button>
             ))}
           </div>
-          
+
           {/* Mobile Menu Button */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
@@ -125,7 +138,7 @@ export default function Header() {
             </Button>
           </motion.div>
         </div>
-        
+
         {/* Mobile Navigation */}
         <motion.div
           initial={false}
@@ -142,9 +155,9 @@ export default function Header() {
               <motion.button
                 key={item.id}
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ 
-                  opacity: isMenuOpen ? 1 : 0, 
-                  x: isMenuOpen ? 0 : -20 
+                animate={{
+                  opacity: isMenuOpen ? 1 : 0,
+                  x: isMenuOpen ? 0 : -20
                 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 onClick={() => scrollToSection(item.id)}
