@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Lock, User, LogIn } from "lucide-react";
 import { authApi } from "@/lib/adminApi";
-import { setToken } from "@/lib/auth";
+import { setToken, isAuthed } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminLogin() {
@@ -11,6 +11,8 @@ export default function AdminLogin() {
   const { toast } = useToast();
   const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
+
+  if (isAuthed()) return <Redirect to="/admin/dashboard" />;
 
   const submit = async (e) => {
     e.preventDefault();
