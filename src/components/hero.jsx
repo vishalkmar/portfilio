@@ -24,6 +24,21 @@ const HIGHLIGHTS = [
   { value: "50K+", label: "Monthly Users" },
 ];
 
+/** Glass chips that float around the portrait. */
+const ORBIT_BADGES = [
+  { label: "React", icon: "\u{269B}\u{FE0F}", position: { top: "8%", left: "-4%" } },
+  { label: "Node.js", icon: "\u{1F7E9}", position: { top: "26%", right: "-8%" } },
+  { label: "Next.js", icon: "\u{25B2}", position: { bottom: "22%", left: "-9%" } },
+  { label: "RAG / LLM", icon: "\u{1F916}", position: { bottom: "6%", right: "-2%" } },
+];
+
+/** Scrolls under the hero as a quick read of the stack. */
+const STACK_TICKER = [
+  "React.js", "Next.js", "Node.js", "Express.js", "TypeScript", "MongoDB",
+  "PostgreSQL", "MySQL", "React Native", "Tailwind CSS", "Redis", "Docker",
+  "AWS", "LangChain", "Vector DB", "Razorpay", "Stripe", "Firebase",
+];
+
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
   const [showCursor, setShowCursor] = useState(true);
@@ -177,6 +192,12 @@ export default function Hero() {
       id="home"
       className="relative flex min-h-screen items-center justify-center overflow-hidden pt-24"
     >
+      {/* spotlight that lifts the headline off the star field */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_30%_40%,rgba(0,217,255,0.10),transparent_70%)]"
+      />
+
       <div className="container relative z-10 mx-auto px-6">
         <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
           {/* ------------------- copy ------------------- */}
@@ -339,44 +360,75 @@ export default function Hero() {
             <motion.div
               animate={{ y: [0, -14, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute inset-[18%] "
+              className="absolute inset-[20%]"
             >
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent/40 to-secondary/40 blur-2xl" />
-              <div className="relative h-full w-full overflow-hidden rounded-full ring-2 ring-accent/40">
-                {data.image ? (
-                  <img
-                    src={data.image}
-                    alt={data.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/20 to-secondary/20 text-6xl font-black gradient-text">
-                    {data.name?.[0] || "V"}
-                  </div>
-                )}
+
+              {/* rotating gradient ring: the spinning conic sits behind an
+                  opaque inner circle, so only the 3px rim shows through */}
+              <div className="relative h-full w-full overflow-hidden rounded-full p-[3px]">
+                <div className="conic-ring absolute inset-[-25%]" />
+                <div className="relative h-full w-full overflow-hidden rounded-full bg-background">
+                  {data.image ? (
+                    <img src={data.image} alt={data.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/20 to-secondary/20 text-6xl font-black gradient-text">
+                      {data.name?.[0] || "V"}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
+
+            {/* floating stack badges */}
+            {ORBIT_BADGES.map((badge, i) => (
+              <motion.span
+                key={badge.label}
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1, y: [0, -9, 0] }}
+                transition={{
+                  opacity: { duration: 0.5, delay: 1.1 + i * 0.12 },
+                  scale: { duration: 0.5, delay: 1.1 + i * 0.12 },
+                  y: { duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 },
+                }}
+                className="absolute z-20 hidden rounded-full border border-accent/25 bg-card/80 px-3 py-1.5 text-[11px] font-semibold text-foreground/90 shadow-lg shadow-black/40 backdrop-blur-md sm:block"
+                style={badge.position}
+              >
+                <span className="mr-1.5" aria-hidden="true">
+                  {badge.icon}
+                </span>
+                {badge.label}
+              </motion.span>
+            ))}
           </motion.div>
         </div>
+
+        {/* ------------------- stack ticker ------------------- */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
+          className="relative mt-16 overflow-hidden border-y border-border/50 py-4"
+          style={{
+            maskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)",
+            WebkitMaskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)",
+          }}
+        >
+          {/* the list is rendered twice so the loop has no visible seam */}
+          <div className="animate-marquee flex w-max items-center gap-8">
+            {[...STACK_TICKER, ...STACK_TICKER].map((tech, i) => (
+              <span
+                key={`${tech}-${i}`}
+                className="flex shrink-0 items-center gap-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground/70"
+              >
+                {tech}
+                <span className="h-1 w-1 rounded-full bg-accent/50" />
+              </span>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
-      {/* scroll cue */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6 }}
-        onClick={scrollToProjects}
-        aria-label="Scroll to projects"
-        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2"
-      >
-        <motion.span
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="flex h-12 w-7 justify-center rounded-full border-2 border-accent/60 pt-2"
-        >
-          <span className="h-2.5 w-1 rounded-full bg-accent" />
-        </motion.span>
-      </motion.button>
     </section>
   );
 }
