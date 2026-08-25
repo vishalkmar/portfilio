@@ -81,7 +81,7 @@ export default function Footer() {
     });
 
   return (
-    <footer className="py-16 bg-gradient-to-t from-card/50 to-background border-t border-border relative overflow-hidden">
+    <footer className="py-16 bg-gradient-to-t from-card/50 to-background/70 border-t border-border relative overflow-hidden">
       <div className="absolute inset-0">
         <motion.div
           animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}

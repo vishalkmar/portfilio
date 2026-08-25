@@ -137,7 +137,7 @@ export default function Contact() {
     });
 
   return (
-    <section id="contact" className="py-20 bg-gradient-to-b from-card/30 via-background to-card/30 relative overflow-hidden">
+    <section id="contact" className="py-24 bg-gradient-to-b from-card/20 via-background/70 to-card/20 relative overflow-hidden">
       <div className="absolute inset-0">
         <motion.div
           animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}
