@@ -59,9 +59,12 @@ export function useSpeech() {
     }
   });
   const [speaking, setSpeaking] = useState(false);
+  // a line has been handed to the engine but has not started yet
+  const [queued, setQueued] = useState(false);
 
   const pending = useRef(null); // a line the browser would not let us speak yet
   const current = useRef(null);
+  const startedRef = useRef(false); // has the current utterance actually started?
   const voice = useRef(null);
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
@@ -92,7 +95,14 @@ export function useSpeech() {
 
     let started = false;
     let finished = false;
+    let released = false; // the caller has been told it may carry on
     let endGuard;
+    const release = () => {
+      if (released) return;
+      released = true;
+      if (current.current === u) setQueued(false);
+      onEnd?.();
+    };
     const done = () => {
       if (finished) return;
       finished = true;
@@ -101,9 +111,11 @@ export function useSpeech() {
       clearTimeout(endGuard);
       if (current.current === u) {
         current.current = null;
+        startedRef.current = false;
         setSpeaking(false);
+        setQueued(false);
       }
-      onEnd?.();
+      release();
     };
     const blocked = () => {
       // keep the line so the first interaction can still play it
@@ -112,21 +124,31 @@ export function useSpeech() {
       done();
     };
 
-    // Chrome sometimes neither starts nor errors: when speech is not yet
-    // allowed, or when speak() follows cancel() too closely. If nothing has
-    // started shortly, give up on this line instead of hanging.
+    /*
+     * The first line after a page load can take a few seconds to start
+     * (online voices warm up). That is NOT the same as being blocked —
+     * a real block arrives as a "not-allowed" error. So a slow start is
+     * never cancelled: the caller is simply allowed to carry on, the line
+     * keeps its place in the queue, and it is still remembered so a click
+     * can replay it if it truly never starts.
+     */
     const watchdog = setTimeout(() => {
       if (started) return;
-      if (!hasActivation()) blocked();
-      else {
+      if (!hasActivation()) {
+        pending.current = text;
+        release();
+      } else {
+        // activated but silent: Chrome's cancel()/speak() race, retry is pointless
         if (current.current === u) synth.cancel();
         done();
       }
-    }, 1600);
+    }, 2500);
 
     u.onstart = () => {
       started = true;
+      startedRef.current = true;
       pending.current = null;
+      setQueued(false);
       setSpeaking(true);
       // Chrome can also lose the end event; never wait longer than the
       // line could possibly take
@@ -138,6 +160,8 @@ export function useSpeech() {
     u.onend = done;
     u.onerror = (e) => (e.error === "not-allowed" ? blocked() : done());
     current.current = u;
+    startedRef.current = false;
+    setQueued(true);
 
     // a short gap after cancel() lets Chrome actually start the next line
     const kick = setTimeout(() => {
@@ -164,7 +188,8 @@ export function useSpeech() {
       // the mute control handles its own click
       if (e.target?.closest?.("[data-byte-mute]")) return;
       const text = pending.current;
-      if (text && !mutedRef.current && !current.current) play(text);
+      // replay unless Byte is already audibly speaking that line
+      if (text && !mutedRef.current && !(current.current && startedRef.current)) play(text);
     };
     window.addEventListener("pointerdown", release);
     window.addEventListener("keydown", release);
@@ -186,10 +211,13 @@ export function useSpeech() {
         pending.current = null;
         window.speechSynthesis.cancel();
         setSpeaking(false);
+        setQueued(false);
       }
       return next;
     });
   }, []);
 
-  return { say, speaking, muted, toggleMute, supported: supported() };
+  // "speaking" also covers a line that is queued but still warming up, so
+  // callers (like the intro curtain) wait for it instead of talking over it
+  return { say, speaking: speaking || queued, muted, toggleMute, supported: supported() };
 }
