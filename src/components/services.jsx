@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { publicApi } from "@/lib/publicApi";
 import { useRevealOnScroll } from "@/hooks/use-gsap";
-import { byteReact } from "@/components/guide/byte-events";
+import { byteReact, byteNarrate } from "@/components/guide/byte-events";
 
 const ICON_MAP = {
   Code, Server, Cloud, Smartphone, Search, Users, Palette, Database,
@@ -27,7 +27,8 @@ const PALETTE = {
 };
 const colorsFor = (c) => PALETTE[c] || PALETTE["from-blue-500 to-cyan-500"];
 
-const ROTATE_MS = 6500;
+/** pause after Byte finishes one tab before moving to the next */
+const NEXT_DELAY_MS = 700;
 
 const PROCESS = [
   { Icon: Compass, title: "Discover", text: "Goals, users and constraints — agreed before a line of code." },
@@ -150,7 +151,11 @@ export default function Services() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
+  const [narrating, setNarrating] = useState(false);
+  const [waiting, setWaiting] = useState(false);
   const sectionRef = useRef(null);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   useEffect(() => {
     publicApi
@@ -171,11 +176,48 @@ export default function Services() {
     return () => io.disconnect();
   }, [loading]);
 
+  /*
+   * Byte reads out the active tab's heading; the moment he finishes, the
+   * next tab comes up. Hovering the panel holds the current tab (Byte still
+   * reads any tab you click), and leaving it carries on.
+   */
   useEffect(() => {
-    if (paused || !inView || services.length < 2) return undefined;
-    const t = setTimeout(() => setActive((i) => (i + 1) % services.length), ROTATE_MS);
+    if (!inView || services.length === 0) return undefined;
+    const svc = services[active];
+    const n = byteNarrate([`Service ${active + 1} of ${services.length} 💼`, svc.title], {
+      pose: "point-left",
+    });
+    let alive = true;
+    let timer;
+    setNarrating(true);
+    setWaiting(false);
+    n.then(() => {
+      if (!alive) return;
+      setNarrating(false);
+      if (services.length < 2) return;
+      if (pausedRef.current) {
+        setWaiting(true);
+        return;
+      }
+      timer = setTimeout(() => setActive((i) => (i + 1) % services.length), NEXT_DELAY_MS);
+    });
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      n.cancel();
+      setNarrating(false);
+    };
+  }, [active, inView, services]);
+
+  // finished while the panel was hovered: move on once the pointer leaves
+  useEffect(() => {
+    if (paused || !waiting) return undefined;
+    const t = setTimeout(() => {
+      setWaiting(false);
+      setActive((i) => (i + 1) % services.length);
+    }, NEXT_DELAY_MS);
     return () => clearTimeout(t);
-  }, [active, paused, inView, services.length]);
+  }, [paused, waiting, services.length]);
 
   const current = services[active];
 
@@ -261,17 +303,18 @@ export default function Services() {
                       {s.title}
                     </span>
 
-                    {/* auto-advance timer */}
-                    {on && (
-                      <span className="absolute inset-x-3 bottom-1 h-[2px] overflow-hidden rounded-full bg-white/5">
-                        <motion.span
-                          key={`${active}-${paused}-${inView}`}
-                          className="block h-full origin-left rounded-full"
-                          style={{ background: `linear-gradient(90deg, ${a}, ${b})` }}
-                          initial={{ scaleX: 0 }}
-                          animate={{ scaleX: paused || !inView ? 0 : 1 }}
-                          transition={{ duration: paused || !inView ? 0.2 : ROTATE_MS / 1000, ease: "linear" }}
-                        />
+                    {/* equaliser while Byte is reading this tab */}
+                    {on && narrating && (
+                      <span className="relative ml-auto hidden h-4 shrink-0 items-end gap-[2px] lg:flex" aria-hidden="true">
+                        {[0, 1, 2].map((k) => (
+                          <motion.span
+                            key={k}
+                            className="w-[3px] rounded-full"
+                            style={{ background: `linear-gradient(180deg, ${a}, ${b})` }}
+                            animate={{ height: ["30%", "100%", "40%", "80%", "30%"] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: k * 0.15 }}
+                          />
+                        ))}
                       </span>
                     )}
                   </button>

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { byteReact } from "@/components/guide/byte-events";
+import { byteReact, byteNarrate } from "@/components/guide/byte-events";
+import { FaWhatsapp } from "react-icons/fa";
 import {
   Mail,
   Phone,
@@ -24,6 +25,25 @@ import {
 } from "lucide-react";
 import { publicApi } from "@/lib/publicApi";
 import { API_BASE } from "@/lib/api";
+
+/** Messages from the form are delivered to this WhatsApp number (India). */
+const WHATSAPP_NUMBER = "919540792427";
+
+/** Formats the form as a readable WhatsApp message. */
+function whatsappUrl({ name, email, subject, message }) {
+  const lines = [
+    "*New message from your portfolio*",
+    "",
+    `*Name:* ${name.trim()}`,
+    email.trim() ? `*Email:* ${email.trim()}` : null,
+    subject.trim() ? `*Subject:* ${subject.trim()}` : null,
+    "",
+    "*Message:*",
+    message.trim(),
+  ].filter((l) => l !== null);
+  // api.whatsapp.com keeps the text intact (wa.me re-encodes it on redirect)
+  return `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(lines.join("\n"))}`;
+}
 
 const SOCIAL_META = {
   github: { icon: Github, color: "hover:text-gray-400" },
@@ -88,32 +108,42 @@ export default function Contact() {
     byteReact("cv");
   };
 
+  /**
+   * The form no longer sends email: it hands the message to WhatsApp.
+   * Byte announces it while a loader shows, and only once he has finished
+   * talking does the page move on to WhatsApp with the message filled in.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
+    if (!formData.name.trim() || !formData.message.trim()) {
       setFormStatus("error");
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+      toast({ title: "Please add your name and a message", variant: "destructive" });
+      setTimeout(() => setFormStatus(null), 2500);
       return;
     }
+
+    const url = whatsappUrl(formData);
+    const first = formData.name.trim().split(/\s+/)[0];
     setIsSubmitting(true);
-    try {
-      await publicApi.sendContact(formData);
-      setFormStatus("success");
-      byteReact("contact", { name: formData.name });
-      toast({ title: "Message sent!", description: "Thanks for reaching out." });
-      setFormData({ name: "", email: "", subject: "", message: "" });
-      setTimeout(() => setFormStatus(null), 3000);
-    } catch (err) {
-      setFormStatus("error");
-      byteReact("contact-error");
-      toast({
-        title: "Failed to send",
-        description: err?.response?.data?.message || "Try again later",
-        variant: "destructive",
-      });
-    } finally {
+
+    await byteNarrate(
+      [
+        `Thanks, ${first}! 📲`,
+        "I'm sending your message to Vishal on WhatsApp…",
+        "Opening WhatsApp now!",
+      ],
+      { pose: "celebrate", timeout: 15000 }
+    );
+
+    setFormStatus("success");
+    window.location.href = url;
+
+    // on phones the WhatsApp app opens on top and this page stays behind
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      setTimeout(() => setFormStatus(null), 2500);
+    }, 1500);
   };
 
   const contactInfo = [
@@ -293,7 +323,55 @@ export default function Contact() {
             viewport={{ once: true }}
           >
             <Card className="glass-effect border-border p-8 relative overflow-hidden">
+              {/* Byte is delivering the message: hold the form under a loader */}
+              <AnimatePresence>
+                {isSubmitting && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-5 bg-background/85 px-6 text-center backdrop-blur-md"
+                  >
+                    <div className="relative h-24 w-24">
+                      <motion.span
+                        className="absolute inset-0 rounded-full border-4 border-[#25D366]/20 border-t-[#25D366]"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      <motion.span
+                        className="absolute inset-3 flex items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_0_40px_-6px_#25D366]"
+                        animate={{ scale: [1, 1.08, 1] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      >
+                        <FaWhatsapp className="h-9 w-9" />
+                      </motion.span>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-foreground">Sending to Vishal on WhatsApp…</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Byte is delivering your message
+                        <motion.span
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{ duration: 1.2, repeat: Infinity }}
+                        >
+                          …
+                        </motion.span>
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <CardContent className="p-0 relative z-10">
+                <div className="mb-7 flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30">
+                    <FaWhatsapp className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <h3 className="text-2xl font-extrabold gradient-text">Message Me</h3>
+                    <p className="text-sm text-muted-foreground">Lands straight in my WhatsApp — I reply fast.</p>
+                  </div>
+                </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <motion.div className="space-y-2" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -310,7 +388,7 @@ export default function Contact() {
                     </motion.div>
 
                     <motion.div className="space-y-2" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                      <Label htmlFor="email" className="text-lg font-medium">Email *</Label>
+                      <Label htmlFor="email" className="text-lg font-medium">Email <span className="text-sm font-normal text-muted-foreground">(optional)</span></Label>
                       <Input
                         id="email"
                         name="email"
@@ -319,7 +397,6 @@ export default function Contact() {
                         onChange={handleInputChange}
                         placeholder="your.email@example.com"
                         className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-foreground caret-accent placeholder:text-muted-foreground/70"
-                        required
                       />
                     </motion.div>
                   </div>
@@ -355,7 +432,7 @@ export default function Contact() {
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="magnetic-button w-full bg-gradient-to-r from-accent to-secondary text-white py-6 text-xl font-bold rounded-xl shadow-2xl shadow-accent/50 hover:shadow-accent/70 transition-all duration-500 group relative overflow-hidden disabled:opacity-60"
+                        className="magnetic-button w-full bg-gradient-to-r from-[#25D366] to-accent text-white py-6 text-xl font-bold rounded-xl shadow-2xl shadow-accent/50 hover:shadow-accent/70 transition-all duration-500 group relative overflow-hidden disabled:opacity-60"
                       >
                         <AnimatePresence mode="wait">
                           {isSubmitting ? (
@@ -371,7 +448,7 @@ export default function Contact() {
                                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                                 className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
                               />
-                              Sending Message...
+                              Byte is sending…
                             </motion.span>
                           ) : formStatus === "success" ? (
                             <motion.span
@@ -381,7 +458,7 @@ export default function Contact() {
                               className="relative z-10 flex items-center justify-center gap-3"
                             >
                               <CheckCircle className="w-6 h-6" />
-                              Message Sent!
+                              Opening WhatsApp…
                             </motion.span>
                           ) : formStatus === "error" ? (
                             <motion.span
@@ -400,8 +477,9 @@ export default function Contact() {
                               animate={{ opacity: 1 }}
                               className="relative z-10 flex items-center justify-center gap-3"
                             >
-                              <Send className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                              Send Message
+                              <FaWhatsapp className="w-6 h-6 transition-transform group-hover:scale-110" />
+                              Send on WhatsApp
+                              <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </motion.span>
                           )}
                         </AnimatePresence>

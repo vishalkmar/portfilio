@@ -13,7 +13,7 @@ import SpeechBubble from "./speech-bubble";
 import CinemaCurtain from "./cinema-curtain";
 import { useTour } from "./tour-context";
 import { useSpeech } from "./use-speech";
-import { BYTE_EVENT } from "./byte-events";
+import { BYTE_EVENT, NARRATE_EVENT, NARRATE_DONE, NARRATE_CANCEL } from "./byte-events";
 
 /* The bot box is laid out at this size; everything else is a scale of it. */
 const BOT_W = 160;
@@ -233,6 +233,15 @@ export default function TourGuide() {
           const s = 0.55;
           next = { ...info, desktop: false, s, ...boxFor({ right: W - 12, bottom: H - 12 }, s) };
         }
+      } else if (
+        (() => {
+          const v = document.getElementById("services")?.getBoundingClientRect();
+          return v && v.top < H * 0.55 && v.bottom > H * 0.45;
+        })()
+      ) {
+        // Byte stands beside the services explorer and reads out each tab
+        const s = desktop ? 0.85 : 0.55;
+        next = { kind: "services", desktop, s, ...boxFor({ right: W - 16, bottom: H - 110 }, s) };
       } else if (!sRect || sRect.top >= H * 0.55) {
         const s = desktop ? 0.95 : 0.6;
         next = { kind: "hero", s, ...boxFor({ right: W - 20, bottom: H - 16 }, s) };
@@ -305,6 +314,37 @@ export default function TourGuide() {
 
   /* ---------------- reactions to what the visitor does ---------------- */
   const [reaction, setReaction] = useState(null);
+  const [narration, setNarration] = useState(null);
+  const stageRef = useRef(stage);
+  stageRef.current = stage;
+
+  const narrateDone = useCallback((id) => {
+    window.dispatchEvent(new CustomEvent(NARRATE_DONE, { detail: { id } }));
+  }, []);
+
+  useEffect(() => {
+    const onNarrate = (e) => {
+      const d = e.detail || {};
+      if (!d.id) return;
+      // nothing to say over the intro: let the caller carry on
+      if (stageRef.current !== "tour") {
+        narrateDone(d.id);
+        return;
+      }
+      setBubbleHidden(false);
+      setNarration({ id: d.id, lines: d.lines || [], pose: d.pose || "idle" });
+    };
+    const onCancel = (e) => {
+      const id = e.detail?.id;
+      setNarration((n) => (n && n.id === id ? null : n));
+    };
+    window.addEventListener(NARRATE_EVENT, onNarrate);
+    window.addEventListener(NARRATE_CANCEL, onCancel);
+    return () => {
+      window.removeEventListener(NARRATE_EVENT, onNarrate);
+      window.removeEventListener(NARRATE_CANCEL, onCancel);
+    };
+  }, [narrateDone]);
 
   useEffect(() => {
     let seq = 0;
@@ -406,11 +446,20 @@ export default function TourGuide() {
       : ["That's the tour for now! ✨", "Explore freely, and say hi below 👋"];
   }
 
+  if (mode.kind === "services") pose = mode.desktop ? "point-left" : "point-up-left";
+
   // something the visitor just did takes priority over the tour script
   const reacting = stage === "tour" && reaction;
   if (reacting) {
     pose = reaction.pose;
     lines = reaction.lines;
+  }
+
+  // a component asked Byte to say something and is waiting for him to finish
+  const narrating = stage === "tour" && narration;
+  if (narrating) {
+    pose = narration.pose;
+    lines = narration.lines;
   }
 
   const introStage = stage !== "tour";
@@ -439,9 +488,11 @@ export default function TourGuide() {
     tail = "bottom-right";
   }
 
-  const showBubble = lines && (!bubbleHidden || reacting);
+  const showBubble = lines && lines.length > 0 && (!bubbleHidden || reacting || narrating);
   const bubbleKey = !showBubble
     ? ""
+    : narrating
+    ? `narr-${narration.id}`
     : reacting
     ? `react-${reaction.id}`
     : `${stage}-${mode.kind}-${mode.index ?? ""}`;
@@ -452,7 +503,33 @@ export default function TourGuide() {
 
   // Byte reads each new message aloud
   useEffect(() => {
-    if (bubbleKey) speech.say(spokenText);
+    if (!bubbleKey) return undefined;
+    if (!narrating) {
+      speech.say(spokenText);
+      return undefined;
+    }
+
+    // narration: report back once he has finished, but never before the
+    // bubble has finished typing, so muted visitors can still read it
+    const id = narration.id;
+    const startedAt = Date.now();
+    const readMs = lines.join("\n").length * 26 + 400;
+    let timer;
+    let alive = true;
+    speech.say(spokenText, () => {
+      if (!alive) return;
+      const wait = Math.max(0, startedAt + readMs - Date.now()) + 450;
+      timer = setTimeout(() => {
+        setNarration((n) => (n && n.id === id ? null : n));
+        // don't fall back to replaying the section's own message
+        setBubbleHidden(true);
+        narrateDone(id);
+      }, wait);
+    });
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bubbleKey]);
 

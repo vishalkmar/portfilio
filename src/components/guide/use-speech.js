@@ -92,10 +92,13 @@ export function useSpeech() {
 
     let started = false;
     let finished = false;
+    let endGuard;
     const done = () => {
       if (finished) return;
       finished = true;
       clearTimeout(watchdog);
+      clearTimeout(kick);
+      clearTimeout(endGuard);
       if (current.current === u) {
         current.current = null;
         setSpeaking(false);
@@ -109,21 +112,37 @@ export function useSpeech() {
       done();
     };
 
-    // Chrome sometimes neither starts nor errors when speech is not yet
-    // allowed; if nothing has started shortly, treat it as blocked
+    // Chrome sometimes neither starts nor errors: when speech is not yet
+    // allowed, or when speak() follows cancel() too closely. If nothing has
+    // started shortly, give up on this line instead of hanging.
     const watchdog = setTimeout(() => {
-      if (!started && !hasActivation()) blocked();
-    }, 1200);
+      if (started) return;
+      if (!hasActivation()) blocked();
+      else {
+        if (current.current === u) synth.cancel();
+        done();
+      }
+    }, 1600);
 
     u.onstart = () => {
       started = true;
       pending.current = null;
       setSpeaking(true);
+      // Chrome can also lose the end event; never wait longer than the
+      // line could possibly take
+      endGuard = setTimeout(() => {
+        if (current.current === u) synth.cancel();
+        done();
+      }, u.text.length * 95 + 3000);
     };
     u.onend = done;
     u.onerror = (e) => (e.error === "not-allowed" ? blocked() : done());
     current.current = u;
-    synth.speak(u);
+
+    // a short gap after cancel() lets Chrome actually start the next line
+    const kick = setTimeout(() => {
+      if (!finished && current.current === u) synth.speak(u);
+    }, 90);
   }, []);
 
   /** Speak `text`; `onEnd` always fires (finished, muted, blocked or unsupported). */
