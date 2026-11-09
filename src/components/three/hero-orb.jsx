@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { useTour } from "@/components/guide/tour-context";
 
 const ACCENT = new THREE.Color("#00D9FF");
 const SECONDARY = new THREE.Color("#8B5CF6");
@@ -223,6 +224,7 @@ function Orb() {
  * reduced so the layout is identical either way.
  */
 export default function HeroOrb({ className = "" }) {
+  const { revealed } = useTour();
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
@@ -241,6 +243,7 @@ export default function HeroOrb({ className = "" }) {
   return (
     <div aria-hidden="true" className={`pointer-events-none absolute inset-0 ${className}`}>
       <Canvas
+        frameloop={revealed ? "always" : "demand"}
         camera={{ position: [0, 0, 6.4], fov: 55 }}
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}

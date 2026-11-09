@@ -1,12 +1,38 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { motion } from "framer-motion";
-import { Download, Eye, ArrowRight, Github, Linkedin, Mail, MapPin } from "lucide-react";
+import { motion, useInView, animate } from "framer-motion";
+import {
+  Download,
+  Eye,
+  ArrowRight,
+  CalendarDays,
+  Layers,
+  Users,
+  BrainCircuit,
+  Sparkles,
+  Code2,
+} from "lucide-react";
+import {
+  SiNextdotjs,
+  SiReact,
+  SiNodedotjs,
+  SiExpress,
+  SiMongodb,
+  SiMysql,
+  SiPostgresql,
+  SiDocker,
+  SiTailwindcss,
+  SiTypescript,
+} from "react-icons/si";
+import { FaAws } from "react-icons/fa";
 import { publicApi } from "@/lib/publicApi";
-import { API_BASE } from "@/lib/api";
 import { gsap } from "@/hooks/use-gsap";
+import { useResumeHref } from "@/hooks/use-resume-href";
+import { useTour } from "@/components/guide/tour-context";
+import { byteReact } from "@/components/guide/byte-events";
 
-// shares the three.js chunk with the page backdrop
+// both share the three.js chunk with the page backdrop
 const HeroOrb = lazy(() => import("@/components/three/hero-orb"));
+const HeroWave = lazy(() => import("@/components/three/hero-wave"));
 
 const FALLBACK_TEXTS = [
   "Full Stack Developer",
@@ -15,45 +41,80 @@ const FALLBACK_TEXTS = [
   "AWS, Docker & CI/CD",
 ];
 
-/** Shipped with the frontend build, so the CV is downloadable even if the API is down. */
-const LOCAL_RESUME = "/resume.pdf";
-
 const HIGHLIGHTS = [
-  { value: "1.5+", label: "Years Experience" },
-  { value: "10+", label: "Live Platforms" },
-  { value: "50K+", label: "Monthly Users" },
+  { value: 1.5, decimals: 1, suffix: "+", label: "Years Experience", Icon: CalendarDays },
+  { value: 10, decimals: 0, suffix: "+", label: "Live Platforms", Icon: Layers },
+  { value: 50, decimals: 0, suffix: "K+", label: "Monthly Users", Icon: Users },
 ];
 
 /** Glass chips that float around the portrait. */
 const ORBIT_BADGES = [
-  { label: "React", icon: "\u{269B}\u{FE0F}", position: { top: "8%", left: "-4%" } },
-  { label: "Node.js", icon: "\u{1F7E9}", position: { top: "26%", right: "-8%" } },
-  { label: "Next.js", icon: "\u{25B2}", position: { bottom: "22%", left: "-9%" } },
-  { label: "RAG / LLM", icon: "\u{1F916}", position: { bottom: "6%", right: "-2%" } },
+  { label: "React", Icon: SiReact, color: "#61DAFB", pos: { top: "4%", left: "4%" } },
+  { label: "Node.js", Icon: SiNodedotjs, color: "#5FA04E", pos: { top: "10%", right: "-6%" } },
+  { label: "Next.js", Icon: SiNextdotjs, color: "#FFFFFF", pos: { top: "42%", left: "-12%" } },
+  { label: "MongoDB", Icon: SiMongodb, color: "#47A248", pos: { top: "48%", right: "-14%" } },
+  { label: "MySQL", Icon: SiMysql, color: "#4FA3D1", pos: { bottom: "12%", left: "-4%" } },
+  { label: "RAG / LLM", Icon: BrainCircuit, color: "#A78BFA", pos: { bottom: "6%", right: "-6%" } },
 ];
 
-/** Scrolls under the hero as a quick read of the stack. */
-const STACK_TICKER = [
-  "React.js", "Next.js", "Node.js", "Express.js", "TypeScript", "MongoDB",
-  "PostgreSQL", "MySQL", "React Native", "Tailwind CSS", "Redis", "Docker",
-  "AWS", "LangChain", "Vector DB", "Razorpay", "Stripe", "Firebase",
+const TECH_STACK = [
+  { label: "Next.js", Icon: SiNextdotjs, color: "#FFFFFF" },
+  { label: "React", Icon: SiReact, color: "#61DAFB" },
+  { label: "Node.js", Icon: SiNodedotjs, color: "#5FA04E" },
+  { label: "Express", Icon: SiExpress, color: "#E5E7EB" },
+  { label: "MongoDB", Icon: SiMongodb, color: "#47A248" },
+  { label: "MySQL", Icon: SiMysql, color: "#4FA3D1" },
+  { label: "PostgreSQL", Icon: SiPostgresql, color: "#6C8EEF" },
+  { label: "Docker", Icon: SiDocker, color: "#2496ED" },
+  { label: "AWS", Icon: FaAws, color: "#FF9900" },
+  { label: "Tailwind CSS", Icon: SiTailwindcss, color: "#38BDF8" },
+  { label: "TypeScript", Icon: SiTypescript, color: "#3178C6" },
 ];
+
+/** Counts up from zero the first time it scrolls into view. */
+function CountUp({ value, decimals, suffix, start = true }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true });
+  const [display, setDisplay] = useState((0).toFixed(decimals));
+
+  useEffect(() => {
+    if (!inView || !start) return undefined;
+    const controls = animate(0, value, {
+      duration: 1.8,
+      delay: 0.9,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (v) => setDisplay(v.toFixed(decimals)),
+    });
+    return () => controls.stop();
+  }, [inView, start, value, decimals]);
+
+  return (
+    <span ref={ref}>
+      {display}
+      {suffix}
+    </span>
+  );
+}
 
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
   const [data, setData] = useState({
     name: "Vishal Kumar",
     image: "",
-    summary: "",
-    address: "",
-    email: "",
     positions: FALLBACK_TEXTS,
     resumeUrl: "",
-    socialLinks: {},
   });
 
   const ctaRef = useRef(null);
+  const { revealed } = useTour();
+
+  // entrance animations wait until the intro curtain has parted
+  const fadeUp = (delay = 0, y = 24) => ({
+    initial: { opacity: 0, y },
+    animate: revealed ? { opacity: 1, y: 0 } : { opacity: 0, y },
+    transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
+  });
+  const resumeHref = useResumeHref(data.resumeUrl);
 
   useEffect(() => {
     publicApi
@@ -62,16 +123,12 @@ export default function Hero() {
         setData({
           name: d.name || "Vishal Kumar",
           image: d.image || "",
-          summary: d.summary || "",
-          address: d.address || "",
-          email: d.email || "",
           positions: d.positions?.length
             ? d.positions
             : d.position
             ? [d.position]
             : FALLBACK_TEXTS,
           resumeUrl: d.resumeUrl || "",
-          socialLinks: d.socialLinks || {},
         });
       })
       .catch(() => {});
@@ -79,6 +136,7 @@ export default function Hero() {
 
   /* ---------------- typewriter ---------------- */
   useEffect(() => {
+    if (!revealed) return undefined;
     const texts = data.positions?.length ? data.positions : FALLBACK_TEXTS;
     let typeIndex = 0;
     let charIndex = 0;
@@ -106,14 +164,9 @@ export default function Hero() {
       timer = setTimeout(type, deleting ? 40 : 85);
     };
 
-    timer = setTimeout(type, 500);
+    timer = setTimeout(type, 900);
     return () => clearTimeout(timer);
-  }, [data.positions]);
-
-  useEffect(() => {
-    const cursorTimer = setInterval(() => setShowCursor((p) => !p), 500);
-    return () => clearInterval(cursorTimer);
-  }, []);
+  }, [data.positions, revealed]);
 
   /* ---------------- magnetic CTA ---------------- */
   useEffect(() => {
@@ -154,146 +207,131 @@ export default function Hero() {
   const scrollToProjects = () =>
     document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
 
-  /**
-   * Resolves where the CV actually lives.
-   *
-   * The API endpoint is preferred because it sets Content-Disposition, so the
-   * browser saves the file instead of previewing it. But a host with an
-   * ephemeral filesystem can lose the uploaded PDF, so the endpoint is probed
-   * once and the button falls back to the copy bundled with this build rather
-   * than sending anyone to a 404.
-   */
-  const [resumeHref, setResumeHref] = useState(LOCAL_RESUME);
-
-  useEffect(() => {
-    if (!data.resumeUrl) {
-      setResumeHref(LOCAL_RESUME);
-      return undefined;
-    }
-
-    const url = `${API_BASE}/api/personal/resume/download`;
-    const controller = new AbortController();
-
-    fetch(url, { method: "HEAD", signal: controller.signal })
-      .then((res) => setResumeHref(res.ok ? url : LOCAL_RESUME))
-      .catch(() => setResumeHref(LOCAL_RESUME));
-
-    return () => controller.abort();
-  }, [data.resumeUrl]);
-
-  const socials = [
-    { key: "github", Icon: Github, href: data.socialLinks?.github, label: "GitHub" },
-    { key: "linkedin", Icon: Linkedin, href: data.socialLinks?.linkedin, label: "LinkedIn" },
-    { key: "email", Icon: Mail, href: data.email ? `mailto:${data.email}` : "", label: "Email" },
-  ].filter((s) => s.href);
+  const nameWords = (data.name || "Vishal Kumar").split(" ");
 
   return (
     <section
       id="home"
-      className="relative flex min-h-screen items-center justify-center overflow-hidden pt-24"
+      className="relative flex flex-col justify-center overflow-hidden pb-6 pt-24 lg:min-h-[100svh] lg:pt-20"
     >
       {/* spotlight that lifts the headline off the star field */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_30%_40%,rgba(0,217,255,0.10),transparent_70%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_50%_at_25%_40%,rgba(0,217,255,0.09),transparent_70%),radial-gradient(ellipse_45%_45%_at_75%_45%,rgba(139,92,246,0.12),transparent_70%)]"
       />
 
+      {/* three.js dot swell along the bottom edge */}
+      <Suspense fallback={null}>
+        <HeroWave className="h-[48%]" />
+      </Suspense>
+
       <div className="container relative z-10 mx-auto px-6">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           {/* ------------------- copy ------------------- */}
           <div className="text-center lg:text-left">
             <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-accent"
+              {...fadeUp(0.2, 16)}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent shadow-[0_0_24px_-6px_rgba(0,217,255,0.6)] backdrop-blur-sm"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
               </span>
               Available for work
+              <motion.span
+                animate={{ rotate: [0, 18, -12, 0], scale: [1, 1.25, 1] }}
+                transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 1.2 }}
+                className="inline-flex"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-secondary" />
+              </motion.span>
             </motion.span>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="mb-3 text-lg font-medium text-muted-foreground"
+              {...fadeUp(0.3)}
+              className="text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground md:text-5xl"
             >
-              Hello, I&apos;m
+              Hi, I&apos;m
             </motion.p>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.4 }}
-              className="mb-5 text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl xl:text-8xl"
-            >
-              <span className="gradient-text animate-gradient">{data.name}</span>
-            </motion.h1>
+            {/* each word slides up out of its own mask */}
+            <h1 className="mb-3 text-5xl font-extrabold leading-[1.1] tracking-tight md:text-6xl xl:text-7xl">
+              {nameWords.map((word, i) => (
+                <span key={`${word}-${i}`} className="mr-[0.22em] inline-block overflow-hidden pb-1 align-bottom last:mr-0">
+                  <motion.span
+                    initial={{ y: "110%" }}
+                    animate={{ y: revealed ? 0 : "110%" }}
+                    transition={{ duration: 0.9, delay: 0.4 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                    className="gradient-text animate-gradient inline-block"
+                  >
+                    {word}
+                  </motion.span>
+                </span>
+              ))}
+            </h1>
 
+            {/* typewriter: every new character springs in */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="mb-6 flex min-h-[3rem] items-center justify-center text-xl font-semibold text-foreground/90 md:text-3xl lg:justify-start"
+              {...fadeUp(0.7, 16)}
+              className="mb-4 flex min-h-[2.25rem] items-center justify-center font-mono text-lg font-semibold text-foreground/90 md:text-xl lg:justify-start"
             >
+              <Code2 className="mr-2 h-5 w-5 shrink-0 text-accent" />
               <span className="text-muted-foreground">&lt;</span>
-              <span className="mx-2">{currentText}</span>
-              <span
-                className={`text-accent transition-opacity ${showCursor ? "opacity-100" : "opacity-0"}`}
+              <span className="mx-1.5 whitespace-pre">
+                {currentText.split("").map((ch, i) => (
+                  <motion.span
+                    key={`${i}-${ch}`}
+                    initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{ duration: 0.25 }}
+                    className="inline-block"
+                  >
+                    {ch}
+                  </motion.span>
+                ))}
+              </span>
+              <motion.span
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="text-accent"
               >
                 |
-              </span>
-              <span className="text-muted-foreground">/&gt;</span>
+              </motion.span>
+              <span className="ml-1.5 text-muted-foreground">/&gt;</span>
             </motion.div>
 
-            {data.summary && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7 }}
-                className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg lg:mx-0"
-              >
-                {data.summary}
-              </motion.p>
-            )}
-
-            {/* highlights */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="mx-auto mb-9 grid max-w-md grid-cols-3 gap-3 lg:mx-0"
+            <motion.p
+              {...fadeUp(0.8, 16)}
+              className="mx-auto mb-3 max-w-xl text-base leading-relaxed text-foreground/85 md:text-lg lg:mx-0"
             >
-              {HIGHLIGHTS.map((h) => (
-                <div
-                  key={h.label}
-                  className="rounded-2xl border border-border/60 bg-card/40 px-3 py-3 text-center backdrop-blur-sm"
-                >
-                  <p className="text-xl font-extrabold gradient-text md:text-2xl">{h.value}</p>
-                  <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {h.label}
-                  </p>
-                </div>
-              ))}
-            </motion.div>
+              Full Stack Developer with{" "}
+              <span className="font-bold text-accent">1.5+ years</span> of experience shipping
+              production-grade web and mobile applications.
+            </motion.p>
+
+            <motion.p
+              {...fadeUp(0.9, 16)}
+              className="mx-auto mb-6 max-w-xl border-l-2 border-accent/70 pl-4 text-left text-sm leading-relaxed text-muted-foreground md:text-[15px] lg:mx-0"
+            >
+              I build and deploy scalable, real-world applications using React.js, Next.js,
+              Node.js, Express.js, MongoDB, MySQL and PostgreSQL. I also create AI-powered
+              products, CRM systems, real-time platforms and secure payment integrations.
+            </motion.p>
 
             {/* CTAs */}
             <motion.div
               ref={ctaRef}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.9 }}
-              className="flex flex-col items-center gap-4 sm:flex-row lg:justify-start"
+              {...fadeUp(1, 20)}
+              className="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start"
             >
               <button
                 data-magnetic
                 onClick={scrollToProjects}
                 data-testid="button-view-work"
-                className="group inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-accent to-secondary px-8 py-4 text-base font-bold text-white shadow-2xl shadow-accent/40 transition-shadow duration-500 hover:shadow-accent/70"
+                className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-accent to-secondary px-7 py-3 text-sm font-bold text-white shadow-2xl shadow-accent/40 transition-shadow duration-500 hover:shadow-accent/70"
               >
+                {/* sheen that sweeps across on hover */}
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <Eye className="h-5 w-5" />
                 View My Work
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -307,66 +345,92 @@ export default function Hero() {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="button-download-resume"
-                className="group inline-flex items-center gap-3 rounded-full border-2 border-accent px-8 py-4 text-base font-bold text-accent backdrop-blur-sm transition-colors duration-500 hover:bg-accent hover:text-accent-foreground"
+                onClick={() => byteReact("cv")}
+                className="group inline-flex items-center gap-3 rounded-full border-2 border-accent px-7 py-3 text-sm font-bold text-accent backdrop-blur-sm transition-colors duration-500 hover:bg-accent hover:text-accent-foreground"
               >
                 <Download className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
                 Download CV
               </a>
             </motion.div>
 
-            {/* meta row */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.1 }}
-              className="mt-8 flex flex-wrap items-center justify-center gap-5 lg:justify-start"
-            >
-              {data.address && (
-                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 text-accent" />
-                  {data.address}
-                </span>
-              )}
-              {socials.length > 0 && (
-                <div className="flex items-center gap-3">
-                  {socials.map(({ key, Icon, href, label }) => (
-                    <a
-                      key={key}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={label}
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/60 text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-accent hover:text-accent"
-                    >
-                      <Icon className="h-4 w-4" />
-                    </a>
-                  ))}
-                </div>
-              )}
-            </motion.div>
+            {/* highlights */}
+            <div className="mx-auto grid max-w-xl grid-cols-3 gap-3 lg:mx-0">
+              {HIGHLIGHTS.map(({ Icon, label, ...h }, i) => (
+                <motion.div
+                  key={label}
+                  {...fadeUp(1.1 + i * 0.1, 20)}
+                  whileHover={{ y: -4 }}
+                  className="group flex flex-col items-center gap-2 rounded-2xl border border-accent/20 bg-card/50 px-3 py-3 backdrop-blur-md transition-colors duration-300 hover:border-accent/60 sm:flex-row sm:gap-3 sm:px-4"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent transition-transform duration-500 group-hover:rotate-[360deg]">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-center sm:text-left">
+                    <span className="block text-xl font-extrabold leading-none text-foreground md:text-2xl">
+                      <CountUp {...h} start={revealed} />
+                    </span>
+                    <span className="mt-1 block text-[11px] font-medium text-muted-foreground sm:whitespace-nowrap md:text-xs">
+                      {label}
+                    </span>
+                  </span>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           {/* ------------------- 3D portrait ------------------- */}
           <motion.div
             initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={revealed ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.85 }}
             transition={{ duration: 1.1, delay: 0.5, ease: "easeOut" }}
-            className="relative mx-auto aspect-square w-full max-w-[380px]"
+            className="relative mx-auto aspect-square w-full max-w-[300px] sm:max-w-[420px] xl:max-w-[480px]"
           >
             <Suspense fallback={null}>
               <HeroOrb />
             </Suspense>
 
+            {/* slow orbit track with travelling glow dots */}
+            <motion.svg
+              aria-hidden="true"
+              viewBox="0 0 200 200"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+              className="pointer-events-none absolute inset-[6%]"
+            >
+              <defs>
+                <linearGradient id="orbit-stroke" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#00D9FF" stopOpacity="0.7" />
+                  <stop offset="50%" stopColor="#8B5CF6" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.7" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="98" fill="none" stroke="url(#orbit-stroke)" strokeWidth="0.6" />
+              <circle cx="100" cy="100" r="88" fill="none" stroke="#00D9FF" strokeOpacity="0.12" strokeWidth="0.5" strokeDasharray="2 4" />
+              {[0, 72, 150, 215, 290].map((deg, i) => {
+                const rad = (deg * Math.PI) / 180;
+                return (
+                  <circle
+                    key={deg}
+                    cx={100 + 98 * Math.cos(rad)}
+                    cy={100 + 98 * Math.sin(rad)}
+                    r={i % 2 ? 1.6 : 2.2}
+                    fill={i % 2 ? "#8B5CF6" : "#00D9FF"}
+                    style={{ filter: "drop-shadow(0 0 3px currentColor)" }}
+                  />
+                );
+              })}
+            </motion.svg>
+
             <motion.div
-              animate={{ y: [0, -14, 0] }}
+              animate={{ y: [0, -12, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute inset-[20%]"
+              className="absolute inset-[18%]"
             >
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent/40 to-secondary/40 blur-2xl" />
 
               {/* rotating gradient ring: the spinning conic sits behind an
                   opaque inner circle, so only the 3px rim shows through */}
-              <div className="relative h-full w-full overflow-hidden rounded-full p-[3px]">
+              <div className="relative h-full w-full overflow-hidden rounded-full p-[3px] shadow-[0_0_60px_-10px_rgba(0,217,255,0.6)]">
                 <div className="conic-ring absolute inset-[-25%]" />
                 <div className="relative h-full w-full overflow-hidden rounded-full bg-background">
                   {data.image ? (
@@ -381,54 +445,77 @@ export default function Hero() {
             </motion.div>
 
             {/* floating stack badges */}
-            {ORBIT_BADGES.map((badge, i) => (
+            {ORBIT_BADGES.map(({ label, Icon, color, pos }, i) => (
               <motion.span
-                key={badge.label}
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1, y: [0, -9, 0] }}
+                key={label}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={revealed ? { opacity: 1, scale: 1, y: [0, -8, 0] } : { opacity: 0, scale: 0.5 }}
+                whileHover={{ scale: 1.1 }}
                 transition={{
                   opacity: { duration: 0.5, delay: 1.1 + i * 0.12 },
-                  scale: { duration: 0.5, delay: 1.1 + i * 0.12 },
-                  y: { duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 },
+                  scale: { type: "spring", stiffness: 260, damping: 18, delay: 1.1 + i * 0.12 },
+                  y: { duration: 3.5 + i * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 },
                 }}
-                className="absolute z-20 hidden rounded-full border border-accent/25 bg-card/80 px-3 py-1.5 text-[11px] font-semibold text-foreground/90 shadow-lg shadow-black/40 backdrop-blur-md sm:block"
-                style={badge.position}
+                className="absolute z-20 hidden items-center gap-2 rounded-xl border border-accent/25 bg-card/80 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-lg shadow-black/40 backdrop-blur-md sm:flex"
+                style={pos}
               >
-                <span className="mr-1.5" aria-hidden="true">
-                  {badge.icon}
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg"
+                  style={{ background: `${color}1f`, boxShadow: `0 0 14px -4px ${color}` }}
+                >
+                  <motion.span
+                    animate={label === "React" ? { rotate: 360 } : { rotate: [0, -10, 10, 0] }}
+                    transition={
+                      label === "React"
+                        ? { duration: 8, repeat: Infinity, ease: "linear" }
+                        : { duration: 3, repeat: Infinity, repeatDelay: 2 + i * 0.4 }
+                    }
+                    className="inline-flex"
+                  >
+                    <Icon className="h-4 w-4" style={{ color }} />
+                  </motion.span>
                 </span>
-                {badge.label}
+                {label}
               </motion.span>
             ))}
           </motion.div>
         </div>
 
-        {/* ------------------- stack ticker ------------------- */}
+        {/* ------------------- tech stack bar ------------------- */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.4 }}
-          className="relative mt-16 overflow-hidden border-y border-border/50 py-4"
-          style={{
-            maskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)",
-            WebkitMaskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)",
-          }}
+          {...fadeUp(1.3, 30)}
+          className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-accent/15 bg-card/40 px-5 py-4 backdrop-blur-md md:flex-row md:gap-6 lg:mt-10"
         >
-          {/* the list is rendered twice so the loop has no visible seam */}
-          <div className="animate-marquee flex w-max items-center gap-8">
-            {[...STACK_TICKER, ...STACK_TICKER].map((tech, i) => (
-              <span
-                key={`${tech}-${i}`}
-                className="flex shrink-0 items-center gap-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground/70"
+          <div className="flex shrink-0 items-center gap-2 md:border-r md:border-border/60 md:pr-6">
+            <Code2 className="h-5 w-5 text-accent" />
+            <span className="text-lg font-bold text-foreground">Tech Stack</span>
+          </div>
+
+          <div className="flex flex-1 flex-wrap items-center justify-center gap-3 md:justify-between">
+            {TECH_STACK.map(({ label, Icon, color }, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 16, scale: 0.8 }}
+                animate={revealed ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.8 }}
+                transition={{ type: "spring", stiffness: 240, damping: 16, delay: 1.45 + i * 0.05 }}
+                whileHover={{ y: -6, scale: 1.12 }}
+                className="group relative"
               >
-                {tech}
-                <span className="h-1 w-1 rounded-full bg-accent/50" />
-              </span>
+                <div
+                  title={label}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/70 bg-background/70 transition-all duration-300 group-hover:border-transparent md:h-12 md:w-12"
+                  style={{ "--glow": color }}
+                >
+                  <Icon className="h-6 w-6 transition-[filter] duration-300 group-hover:[filter:drop-shadow(0_0_8px_var(--glow))]" style={{ color }} />
+                </div>
+                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-card px-2 py-0.5 text-[10px] font-semibold text-foreground opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+                  {label}
+                </span>
+              </motion.div>
             ))}
           </div>
         </motion.div>
       </div>
-
     </section>
   );
 }

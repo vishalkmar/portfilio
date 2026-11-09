@@ -10,6 +10,8 @@ import Skills from "@/components/skills";
 import Contact from "@/components/contact";
 import Footer from "@/components/footer";
 import { ScrollTrigger } from "@/hooks/use-gsap";
+import { TourProvider } from "@/components/guide/tour-context";
+import TourGuide from "@/components/guide/tour-guide";
 
 // three.js is ~700kB, so it is fetched after the page is interactive
 const SceneBackground = lazy(() => import("@/components/three/scene-background"));
@@ -39,6 +41,7 @@ export default function Home() {
   }, []);
 
   return (
+    <TourProvider>
     <div className="relative min-h-screen overflow-x-hidden">
       {/* one WebGL backdrop shared by every section */}
       <Suspense fallback={null}>
@@ -51,13 +54,8 @@ export default function Home() {
         className="fixed left-0 right-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-accent via-secondary to-accent"
       />
 
-      {/* curtain wipe on first paint */}
-      <motion.div
-        initial={{ scaleY: 1 }}
-        animate={{ scaleY: 0 }}
-        transition={{ duration: 0.9, delay: 0.35, ease: [0.76, 0, 0.24, 1] }}
-        className="pointer-events-none fixed inset-0 z-[70] origin-top bg-gradient-to-br from-accent to-secondary"
-      />
+      {/* cinema curtain intro + the guide bot that tours the page */}
+      <TourGuide />
 
       <div className="relative">
         <Header />
@@ -88,5 +86,6 @@ export default function Home() {
         )}
       </AnimatePresence>
     </div>
+    </TourProvider>
   );
 }

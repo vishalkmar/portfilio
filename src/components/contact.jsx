@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { byteReact } from "@/components/guide/byte-events";
 import {
   Mail,
   Phone,
@@ -61,6 +62,16 @@ export default function Contact() {
       .catch(() => {});
   }, []);
 
+  // "Discuss this service" in Services pre-fills the subject line
+  useEffect(() => {
+    const onPrefill = (e) => {
+      const subject = e.detail?.subject;
+      if (subject) setFormData((f) => ({ ...f, subject }));
+    };
+    window.addEventListener("contact:prefill", onPrefill);
+    return () => window.removeEventListener("contact:prefill", onPrefill);
+  }, []);
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -74,6 +85,7 @@ export default function Contact() {
       ? personal.resumeUrl
       : `${API_BASE}${personal.resumeUrl}`;
     window.open(url, "_blank");
+    byteReact("cv");
   };
 
   const handleSubmit = async (e) => {
@@ -87,11 +99,13 @@ export default function Contact() {
     try {
       await publicApi.sendContact(formData);
       setFormStatus("success");
+      byteReact("contact", { name: formData.name });
       toast({ title: "Message sent!", description: "Thanks for reaching out." });
       setFormData({ name: "", email: "", subject: "", message: "" });
       setTimeout(() => setFormStatus(null), 3000);
     } catch (err) {
       setFormStatus("error");
+      byteReact("contact-error");
       toast({
         title: "Failed to send",
         description: err?.response?.data?.message || "Try again later",
@@ -290,7 +304,7 @@ export default function Contact() {
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="Your full name"
-                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
+                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-foreground caret-accent placeholder:text-muted-foreground/70"
                         required
                       />
                     </motion.div>
@@ -304,7 +318,7 @@ export default function Contact() {
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="your.email@example.com"
-                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
+                        className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-foreground caret-accent placeholder:text-muted-foreground/70"
                         required
                       />
                     </motion.div>
@@ -318,7 +332,7 @@ export default function Contact() {
                       value={formData.subject}
                       onChange={handleInputChange}
                       placeholder="Project inquiry, collaboration, etc."
-                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
+                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-foreground caret-accent placeholder:text-muted-foreground/70"
                     />
                   </motion.div>
 
@@ -331,7 +345,7 @@ export default function Contact() {
                       onChange={handleInputChange}
                       rows={6}
                       placeholder="Tell me about your project, goals, timeline..."
-                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-black"
+                      className="bg-input/50 border-border focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-300 py-3 text-lg backdrop-blur-sm text-foreground caret-accent placeholder:text-muted-foreground/70"
                       required
                     />
                   </motion.div>

@@ -1,6 +1,7 @@
 import { Suspense, useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { useTour } from "@/components/guide/tour-context";
 
 const ACCENT = new THREE.Color("#00D9FF");
 const SECONDARY = new THREE.Color("#8B5CF6");
@@ -229,6 +230,7 @@ function Nebula({ color, position, scale, seed, speed, scrollRef }) {
  * device is too small to spend the frames on it.
  */
 export default function SceneBackground() {
+  const { revealed } = useTour();
   const scrollRef = useRef(0);
   const [enabled, setEnabled] = useState(false);
 
@@ -268,6 +270,7 @@ export default function SceneBackground() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
       <Canvas
+        frameloop={revealed ? "always" : "demand"}
         camera={{ position: [0, 0, 7], fov: 60 }}
         dpr={[1, 1.75]}
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}

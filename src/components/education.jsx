@@ -3,6 +3,7 @@ import { motion, useScroll, useSpring } from "framer-motion";
 import { GraduationCap, CalendarDays, Award } from "lucide-react";
 import { publicApi } from "@/lib/publicApi";
 import { useRevealOnScroll, useTilt } from "@/hooks/use-gsap";
+import { useTour } from "@/components/guide/tour-context";
 
 const formatGrade = (it) => {
   if (!it.gradeValue && it.gradeType !== "Pursuing") return "";
@@ -14,16 +15,90 @@ const formatGrade = (it) => {
   return `${value} ${it.gradeType}`;
 };
 
-function TimelineCard({ edu, side }) {
+/**
+ * Streams a fixed-length text in, like a chat model writing its reply.
+ * Returns how many characters are visible; it never runs backwards.
+ */
+function useStream(length, start, { cps = 75, delay = 650 } = {}) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!start || !length) return undefined;
+    let raf = 0;
+    let t0 = 0;
+    const timer = setTimeout(() => {
+      const step = (ts) => {
+        if (!t0) t0 = ts;
+        const n = Math.min(length, Math.floor(((ts - t0) / 1000) * cps));
+        setCount((prev) => Math.max(prev, n));
+        if (n < length) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }, delay);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(raf);
+    };
+  }, [start, length, cps, delay]);
+
+  return count;
+}
+
+/**
+ * Shows `text` up to `count - from` characters. The rest is still laid out
+ * but invisible, so the card keeps its final size while it is written.
+ */
+function Streamed({ text, from, count }) {
+  const shown = Math.max(0, Math.min(text.length, count - from));
+  const writing = shown > 0 && shown < text.length;
+  return (
+    <>
+      {text.slice(0, shown)}
+      {writing && <span className="stream-caret" aria-hidden="true" />}
+      <span className="opacity-0">{text.slice(shown)}</span>
+    </>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="h-1.5 w-1.5 rounded-full bg-accent"
+          animate={{ opacity: [0.25, 1, 0.25], y: [0, -3, 0] }}
+          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function TimelineCard({ edu, side, active, reached }) {
   const tiltRef = useTilt({ max: 6, scale: 1.01 });
-  const [expanded, setExpanded] = useState(false);
   const grade = formatGrade(edu);
+
+  const degree = edu.degree || "";
+  const institution = edu.institution || "";
+  const description = edu.description || "";
+  const total = degree.length + institution.length + description.length;
+  const count = useStream(total, reached);
+
+  const headDone = count >= degree.length + institution.length;
+  const allDone = count >= total;
 
   return (
     <div className="[perspective:1100px]">
       <article
         ref={tiltRef}
-        className="group relative overflow-hidden rounded-2xl border border-border bg-card/70 p-6 backdrop-blur-md transition-colors duration-500 hover:border-accent/70"
+        data-edu-card
+        data-edu-side={side}
+        data-edu-degree={degree}
+        data-edu-institution={institution}
+        className={`group relative overflow-hidden rounded-2xl border bg-card/70 p-6 backdrop-blur-md transition-all duration-500 hover:border-accent/70 ${
+          active ? "border-accent/80 shadow-[0_0_40px_-10px_rgba(0,217,255,0.6)]" : "border-border"
+        }`}
         style={{ "--glare-opacity": 0, "--glare-x": "50%", "--glare-y": "50%" }}
       >
         <span
@@ -35,6 +110,23 @@ function TimelineCard({ edu, side }) {
               "radial-gradient(280px circle at var(--glare-x) var(--glare-y), rgba(139,92,246,0.14), transparent 65%)",
           }}
         />
+
+        {/* chat-style status line above the reply */}
+        <div className="relative mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-accent to-secondary text-[9px] font-black text-white">
+            AI
+          </span>
+          {count === 0 ? (
+            <>
+              <span>{reached ? "Thinking" : "Waiting for the guide"}</span>
+              <ThinkingDots />
+            </>
+          ) : allDone ? (
+            <span className="text-accent">Done</span>
+          ) : (
+            <span className="text-accent">Writing…</span>
+          )}
+        </div>
 
         <div className="relative flex items-start gap-4">
           <div className="relative shrink-0">
@@ -50,11 +142,18 @@ function TimelineCard({ edu, side }) {
 
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-bold leading-snug text-foreground transition-colors group-hover:text-accent md:text-lg">
-              {edu.degree}
+              <Streamed text={degree} from={0} count={count} />
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">{edu.institution}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <Streamed text={institution} from={degree.length} count={count} />
+            </p>
 
-            <div className={`mt-3 flex flex-wrap items-center gap-2 ${side === "right" ? "" : "md:justify-start"}`}>
+            <motion.div
+              initial={false}
+              animate={{ opacity: headDone ? 1 : 0, y: headDone ? 0 : 6 }}
+              transition={{ duration: 0.4 }}
+              className="mt-3 flex flex-wrap items-center gap-2"
+            >
               {(edu.startDate || edu.endDate) && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
                   <CalendarDays className="h-3 w-3" />
@@ -68,26 +167,14 @@ function TimelineCard({ edu, side }) {
                   {grade}
                 </span>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
 
-        {edu.description && (
-          <div className="relative mt-4">
-            <p
-              className={`text-sm leading-relaxed text-muted-foreground ${
-                expanded ? "" : "line-clamp-3"
-              }`}
-            >
-              {edu.description}
-            </p>
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="mt-2 text-xs font-semibold text-accent transition-opacity hover:opacity-75"
-            >
-              {expanded ? "Show less" : "Read more"}
-            </button>
-          </div>
+        {description && (
+          <p className="relative mt-4 text-sm leading-relaxed text-muted-foreground">
+            <Streamed text={description} from={degree.length + institution.length} count={count} />
+          </p>
         )}
       </article>
     </div>
@@ -98,6 +185,7 @@ export default function Education() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const timelineRef = useRef(null);
+  const { activeEdu, reachedEdu } = useTour();
 
   useEffect(() => {
     publicApi
@@ -174,13 +262,13 @@ export default function Education() {
 
                     {side === "left" ? (
                       <>
-                        <TimelineCard edu={edu} side="left" />
+                        <TimelineCard edu={edu} side="left" active={activeEdu === index} reached={reachedEdu >= index} />
                         <div className="hidden md:block" />
                       </>
                     ) : (
                       <>
                         <div className="hidden md:block" />
-                        <TimelineCard edu={edu} side="right" />
+                        <TimelineCard edu={edu} side="right" active={activeEdu === index} reached={reachedEdu >= index} />
                       </>
                     )}
                   </div>
